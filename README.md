@@ -253,12 +253,13 @@ The frontend proxies all `/api` requests to the backend automatically (configure
 
 1. Push to GitHub
 2. Connect the repo to [Vercel](https://vercel.com)
-3. Set root directory to `frontend/`
-4. Add environment variable: `VITE_API_URL=https://your-backend-url.onrender.com`
-5. Update `frontend/src/lib/api.js` base URL:
-   ```js
-   baseURL: import.meta.env.VITE_API_URL || '/api'
-   ```
+3. Set the root directory to `frontend/`
+4. Set the build command to `npm run build`
+5. Set the output directory to `dist`
+6. Add environment variable: `VITE_API_URL=https://your-backend-url.onrender.com`
+7. Keep `frontend/vercel.json` so React Router routes rewrite to `index.html`
+
+If you deploy the frontend to Vercel, the backend should live on a separate host such as Render or Railway. Update `CORS_ORIGIN` in the backend to your Vercel domain.
 
 ---
 
