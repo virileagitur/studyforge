@@ -338,7 +338,7 @@ export default function FlashcardsPage() {
                   </div>
                 </div>
 
-                <p className="font-semibold text-lg mb-4 leading-relaxed" style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>{card.front}</p>
+                <p className="font-normal text-lg mb-4 leading-relaxed" style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>{card.front}</p>
 
                 <div className="border-t border-gray-100 pt-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Back</p>
