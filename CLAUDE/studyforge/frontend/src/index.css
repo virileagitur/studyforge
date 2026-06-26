@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-orange: #F97316;
+  --color-orange-light: #FB923C;
+  --color-orange-hover: #EA6C0A;
+  --color-yellow: #FACC15;
+  --color-yellow-light: #FDE047;
+  --color-yellow-accent: #FEF3C7;
+  --color-bg-warm: #FFFDF7;
+  --color-bg-card: #FFFBF5;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #4A4A4A;
+  --color-text-muted: #6B7280;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.10);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', Verdana, Arial, sans-serif;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-warm);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+}
+
+h1 { font-size: 2rem; font-weight: 700; }
+h2 { font-size: 1.75rem; font-weight: 700; }
+h3 { font-size: 1.5rem; font-weight: 600; }
+h4 { font-size: 1.25rem; font-weight: 600; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Card utility */
+.card {
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-card);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Button base */
+.btn-primary {
+  background-color: var(--color-orange);
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  min-height: 44px;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-orange-hover);
+}
+
+.btn-secondary {
+  background-color: var(--color-yellow);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  min-height: 44px;
+  transition: background-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-yellow-light);
+}
+
+/* Form inputs */
+input, select, textarea {
+  font-family: 'Plus Jakarta Sans', Verdana, Arial, sans-serif;
+  font-size: 1rem;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--color-orange);
+  outline-offset: 2px;
+}
+
+/* Transitions */
+.transition-default {
+  transition: all 0.15s ease;
+}
+
+/* Priority badges */
+.badge-high {
+  background: #FEE2E2;
+  color: #DC2626;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.badge-medium {
+  background: #FEF3C7;
+  color: #D97706;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.badge-low {
+  background: #D1FAE5;
+  color: #059669;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.badge-status {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
