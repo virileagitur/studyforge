@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { Button, Input, Spinner, Alert, Select } from '../components/ui';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import SendIcon from '@mui/icons-material/Send';
@@ -12,6 +13,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 export default function TutorPage() {
+  const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [activeConv, setActiveConv] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -160,14 +162,19 @@ export default function TutorPage() {
 
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-orange-100' : 'bg-yellow-100'}`}>
-                {msg.role === 'user'
-                  ? <PersonIcon sx={{ fontSize: 18, color: '#F97316' }} />
-                  : <SmartToyIcon sx={{ fontSize: 18, color: '#D97706' }} />
-                }
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${msg.role === 'user' ? 'bg-orange-100' : 'bg-yellow-100'}`}>
+                {msg.role === 'user' ? (
+                  user?.profile_image ? (
+                    <img src={user.profile_image} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                  ) : (
+                    <PersonIcon sx={{ fontSize: 18, color: '#F97316' }} />
+                  )
+                ) : (
+                  <SmartToyIcon sx={{ fontSize: 18, color: '#D97706' }} />
+                )}
               </div>
-              <div className={`max-w-[80%] px-4 py-3 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-orange-500 text-white' : 'bg-gray-50 text-gray-900'}`}
-                style={msg.role === 'user' ? { whiteSpace: 'pre-wrap' } : { fontFamily: 'Georgia, Cambria, "Times New Roman", Times, serif' }}>
+              <div className={`max-w-[80%] px-4 py-3 rounded-xl leading-relaxed ${msg.role === 'user' ? 'bg-orange-500 text-white text-base' : 'bg-gray-50 text-gray-900'}`}
+                style={msg.role === 'user' ? { whiteSpace: 'pre-wrap' } : { fontFamily: 'Georgia, Cambria, "Times New Roman", Times, serif', fontSize: '1.05rem' }}>
                 {msg.role === 'user' ? (
                   msg.content
                 ) : (

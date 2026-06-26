@@ -216,7 +216,7 @@ export default function FlashcardsPage() {
         >
           <div className="bg-white rounded-2xl p-10 text-center min-h-[300px] flex flex-col items-center justify-center gap-4 transition-all" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
             <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#F97316' }}>{flipped ? 'Answer' : 'Question'}</p>
-            <p className="text-xl font-medium leading-relaxed" style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>{flipped ? studyBack : studyFront}</p>
+            <p className="text-2xl font-semibold leading-relaxed" style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>{flipped ? studyBack : studyFront}</p>
             {!flipped && <p className="text-xs text-gray-400 mt-4">Tap to reveal</p>}
           </div>
         </div>
@@ -338,11 +338,11 @@ export default function FlashcardsPage() {
                   </div>
                 </div>
 
-                <p className="font-medium text-base mb-4 leading-relaxed" style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>{card.front}</p>
+                <p className="font-semibold text-lg mb-4 leading-relaxed" style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>{card.front}</p>
 
                 <div className="border-t border-gray-100 pt-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Back</p>
-                  <p className="text-sm leading-relaxed" style={{ color: '#4A4A4A', fontFamily: 'Georgia, Cambria, serif' }}>{card.back}</p>
+                  <p className="text-base leading-relaxed" style={{ color: '#4A4A4A', fontFamily: 'Georgia, Cambria, serif' }}>{card.back}</p>
                 </div>
 
                 {/* AI expanded view */}

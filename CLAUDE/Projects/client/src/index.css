@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+html,
+body,
+#root {
+  height: 100%;
+  @apply bg-light-background text-text-primary;
+}
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', Verdana, Arial, sans-serif;
+}

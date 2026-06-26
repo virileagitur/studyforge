@@ -317,8 +317,17 @@ export default function NoteEditorPage() {
             contentEditable
             suppressContentEditableWarning
             onInput={handleEditorInput}
-            className="w-full bg-white rounded-xl p-6 text-base focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none leading-relaxed overflow-y-auto"
-            style={{ minHeight: '500px', maxHeight: '700px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', color: '#1A1A1A' }}
+            className="w-full bg-white rounded-xl p-6 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none overflow-y-auto"
+            style={{
+              minHeight: '500px',
+              maxHeight: '700px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              color: '#1A1A1A',
+              fontFamily: "'Nunito', Verdana, Arial, sans-serif",
+              fontSize: '1.1rem',
+              lineHeight: '1.85',
+              letterSpacing: '0.01em',
+            }}
             placeholder="Start writing your notes here..."
           />
         </div>

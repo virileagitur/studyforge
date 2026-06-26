@@ -92,7 +92,19 @@ export default function AppLayout() {
           onClick={() => setSidebarOpen(false)}
           className={({ isActive }) => `${linkBase} ${isActive ? activeClass : inactiveClass}`}
         >
-          <AccountCircleIcon fontSize="small" />
+          {user?.profile_image ? (
+            <img
+              src={user.profile_image}
+              alt={user.name}
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-orange-600 font-bold text-sm">
+                {user?.name?.charAt(0)?.toUpperCase() || '?'}
+              </span>
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{user?.name}</p>
             <p className="text-xs text-gray-400 truncate">{user?.email}</p>
@@ -141,7 +153,22 @@ export default function AppLayout() {
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <MenuIcon />
           </button>
-          <h1 className="text-lg font-bold" style={{ color: '#F97316' }}>StudyForge</h1>
+          <h1 className="text-lg font-bold flex-1" style={{ color: '#F97316' }}>StudyForge</h1>
+          <NavLink to="/profile">
+            {user?.profile_image ? (
+              <img
+                src={user.profile_image}
+                alt={user?.name}
+                className="w-9 h-9 rounded-full object-cover border-2 border-orange-100"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center">
+                <span className="text-orange-600 font-bold text-sm">
+                  {user?.name?.charAt(0)?.toUpperCase() || '?'}
+                </span>
+              </div>
+            )}
+          </NavLink>
         </header>
 
         {/* Page Content */}
