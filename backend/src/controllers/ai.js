@@ -1,33 +1,31 @@
 const { query } = require('../db');
-const multer = require('multer');
-const path = require('path');
 
-// Initialize Anthropic client lazily so the app still starts without a key
-let anthropic = null;
+// Initialize Google Generative AI client lazily
+let genAI = null;
 const getClient = () => {
-  if (!anthropic) {
-    if (!process.env.ANTHROPIC_API_KEY) return null;
-    const Anthropic = require('@anthropic-ai/sdk');
-    anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  if (!genAI) {
+    if (!process.env.GEMINI_API_KEY) return null;
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
-  return anthropic;
+  return genAI;
 };
 
-const MODEL = 'claude-3-5-sonnet-20241022';
+const MODEL = 'gemini-1.5-flash';
 
-// Call Claude or return a placeholder if no API key is set
-const callClaude = async (systemPrompt, userPrompt, maxTokens = 1000) => {
+// Call Gemini or return a placeholder if no API key is set
+const callGemini = async (systemPrompt, userPrompt, maxTokens = 1000) => {
   const client = getClient();
   if (!client) {
-    return '[AI placeholder — add your ANTHROPIC_API_KEY to enable real AI responses]';
+    return '[AI placeholder — add your GEMINI_API_KEY to enable real AI responses]';
   }
-  const msg = await client.messages.create({
+  const model = client.getGenerativeModel({
     model: MODEL,
-    max_tokens: maxTokens,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
+    systemInstruction: systemPrompt,
+    generationConfig: { maxOutputTokens: maxTokens },
   });
-  return msg.content[0].text;
+  const result = await model.generateContent(userPrompt);
+  return result.response.text();
 };
 
 // --- AI Tutor Chat ---
@@ -60,24 +58,27 @@ Guidelines:
 - Encourage and motivate, but stay focused on learning
 - Keep responses concise but complete`;
 
-    const claudeMessages = [
-      ...messages.map(m => ({ role: m.role, content: m.content })),
-      { role: 'user', content: message }
-    ];
-
     const client = getClient();
     let reply;
 
     if (!client) {
-      reply = `[AI Placeholder] You asked: "${message}". With a real API key, I would provide a detailed explanation here. Add your ANTHROPIC_API_KEY to .env to enable real AI tutoring.`;
+      reply = `[AI Placeholder] You asked: "${message}". With a real API key, I would provide a detailed explanation here. Add your GEMINI_API_KEY to Vercel environment variables to enable real AI tutoring.`;
     } else {
-      const msg = await client.messages.create({
+      const model = client.getGenerativeModel({
         model: MODEL,
-        max_tokens: 1500,
-        system: systemPrompt,
-        messages: claudeMessages,
+        systemInstruction: systemPrompt,
+        generationConfig: { maxOutputTokens: 1500 },
       });
-      reply = msg.content[0].text;
+
+      // Build chat history from saved messages
+      const history = messages.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }],
+      }));
+
+      const chat = model.startChat({ history });
+      const result = await chat.sendMessage(message);
+      reply = result.response.text();
     }
 
     messages.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
@@ -159,10 +160,9 @@ const smartPrioritize = async (req, res, next) => {
     ).join('\n');
 
     const systemPrompt = `You are an AI academic prioritization expert. Analyze the student's task list and identify the single most important task to do RIGHT NOW. Consider urgency, priority, and impact. Respond in JSON format only.`;
-
     const userPrompt = `Here are my pending tasks:\n${taskList}\n\nRespond with JSON: { "task_name": "...", "reason": "1-2 sentence motivating explanation of why this task needs attention now" }`;
 
-    const response = await callClaude(systemPrompt, userPrompt, 300);
+    const response = await callGemini(systemPrompt, userPrompt, 300);
 
     let result = { task_name: tasks.rows[0].title, reason: 'This is your highest priority upcoming task.' };
     try {
@@ -199,13 +199,13 @@ Respond with this exact JSON structure:
 
 Include 5-8 key concepts, 8-10 important terms, exactly 10 practice questions with answers, and 3-5 recommended resources.`;
 
-    const response = await callClaude(systemPrompt, userPrompt, 2000);
+    const response = await callGemini(systemPrompt, userPrompt, 2000);
 
     let guide;
     if (response.includes('[AI placeholder')) {
       guide = {
         topic,
-        key_concepts: ['Add your API key to see real content', 'Set ANTHROPIC_API_KEY in .env'],
+        key_concepts: ['Add your GEMINI_API_KEY to enable real content'],
         important_terms: [{ term: 'Placeholder', definition: 'Real content appears with API key' }],
         practice_questions: [{ question: 'Sample question?', answer: 'Sample answer' }],
         recommended_resources: ['Add API key for real recommendations'],
@@ -238,7 +238,7 @@ const summarizeResearch = async (req, res, next) => {
     const systemPrompt = `You are a research summarization expert. Create concise, accurate 3-bullet summaries of academic content.`;
     const userPrompt = `Summarize this research item in exactly 3 bullet points:\nTitle: ${item.title}\nContent: ${contentToSummarize}\n\nFormat: Return only 3 bullet points starting with "•"`;
 
-    const summary = await callClaude(systemPrompt, userPrompt, 400);
+    const summary = await callGemini(systemPrompt, userPrompt, 400);
 
     await query('UPDATE research_items SET ai_summary=$1 WHERE id=$2', [summary, research_id]);
     res.json({ summary });
@@ -262,7 +262,7 @@ const generateFlashcardsFromResearch = async (req, res, next) => {
     const systemPrompt = `You are a flashcard creation expert for students. Generate effective study flashcards. Respond in JSON only.`;
     const userPrompt = `Create 5-8 flashcards from this content:\nTitle: ${item.title}\nContent: ${content}\n\nRespond with JSON array: [{"front": "question or term", "back": "answer or definition"}, ...]`;
 
-    const response = await callClaude(systemPrompt, userPrompt, 1000);
+    const response = await callGemini(systemPrompt, userPrompt, 1000);
 
     let cards = [];
     if (!response.includes('[AI placeholder')) {
@@ -273,9 +273,7 @@ const generateFlashcardsFromResearch = async (req, res, next) => {
         cards = [{ front: 'Sample question', back: 'Sample answer' }];
       }
     } else {
-      cards = [
-        { front: 'Add ANTHROPIC_API_KEY to .env', back: 'To enable real AI flashcard generation' }
-      ];
+      cards = [{ front: 'Add GEMINI_API_KEY to Vercel', back: 'To enable real AI flashcard generation' }];
     }
 
     const inserted = [];
@@ -304,7 +302,7 @@ const summarizeNote = async (req, res, next) => {
     const systemPrompt = 'You are an expert at summarizing academic notes concisely and accurately.';
     const userPrompt = `Summarize this note in 3-5 sentences:\nTitle: ${note.title}\nContent: ${note.content}`;
 
-    const summary = await callClaude(systemPrompt, userPrompt, 500);
+    const summary = await callGemini(systemPrompt, userPrompt, 500);
     await query('UPDATE notes SET ai_summary=$1 WHERE id=$2', [summary, note_id]);
     res.json({ summary });
   } catch (err) {
@@ -323,7 +321,7 @@ const generateQuizFromNote = async (req, res, next) => {
     const systemPrompt = 'You are an expert at creating educational quiz questions. Respond in JSON only.';
     const userPrompt = `Create 5 quiz questions from this note:\nTitle: ${note.title}\nContent: ${note.content}\n\nRespond with JSON: [{"question": "...", "answer": "...", "type": "short_answer"}, ...]`;
 
-    const response = await callClaude(systemPrompt, userPrompt, 800);
+    const response = await callGemini(systemPrompt, userPrompt, 800);
 
     let quiz = [];
     if (!response.includes('[AI placeholder')) {
@@ -334,7 +332,7 @@ const generateQuizFromNote = async (req, res, next) => {
         quiz = [{ question: 'Sample question from your note?', answer: 'Sample answer', type: 'short_answer' }];
       }
     } else {
-      quiz = [{ question: 'Add API key to enable quiz generation', answer: 'Set ANTHROPIC_API_KEY in .env', type: 'short_answer' }];
+      quiz = [{ question: 'Add GEMINI_API_KEY to enable quiz generation', answer: 'Set it in Vercel env vars', type: 'short_answer' }];
     }
 
     await query('UPDATE notes SET ai_quiz=$1 WHERE id=$2', [JSON.stringify(quiz), note_id]);
@@ -358,7 +356,7 @@ const summarizeBook = async (req, res, next) => {
     const systemPrompt = 'You are an expert at summarizing book chapters with key takeaways for students.';
     const userPrompt = `Summarize this chapter from "${book.rows[0].title}"${chapter_name ? ` (${chapter_name})` : ''}:\n\n${chapter_text}\n\nProvide: 1) A 2-3 sentence summary, 2) 3-5 key takeaways as bullet points`;
 
-    const summary = await callClaude(systemPrompt, userPrompt, 600);
+    const summary = await callGemini(systemPrompt, userPrompt, 600);
     res.json({ summary });
   } catch (err) {
     next(err);
@@ -376,7 +374,7 @@ const explainSimply = async (req, res, next) => {
     const systemPrompt = 'You are great at explaining concepts simply, as if talking to a curious 10-year-old.';
     const userPrompt = `Explain this concept simply for a 10-year-old:\nConcept: ${card.front}\nAnswer: ${card.back}\n\nKeep it under 3 sentences using everyday language and a simple analogy.`;
 
-    const explanation = await callClaude(systemPrompt, userPrompt, 300);
+    const explanation = await callGemini(systemPrompt, userPrompt, 300);
     await query('UPDATE flashcards SET simple_explanation=$1 WHERE id=$2', [explanation, flashcard_id]);
     res.json({ explanation });
   } catch (err) {
@@ -395,7 +393,7 @@ const giveExample = async (req, res, next) => {
     const systemPrompt = 'You provide clear, memorable real-world examples that help students remember academic concepts.';
     const userPrompt = `Give a real-world example for this concept:\nConcept: ${card.front}\nDefinition: ${card.back}\n\nProvide 1-2 concrete, relatable real-world examples in 2-3 sentences.`;
 
-    const example = await callClaude(systemPrompt, userPrompt, 300);
+    const example = await callGemini(systemPrompt, userPrompt, 300);
     await query('UPDATE flashcards SET real_world_example=$1 WHERE id=$2', [example, flashcard_id]);
     res.json({ example });
   } catch (err) {
@@ -414,7 +412,7 @@ const dailyCheckIn = async (req, res, next) => {
 Give them: 1) An encouraging opening sentence, 2) One specific study tip for their subject, 3) A motivating closing thought.
 Keep the total response under 4 sentences. Be warm, not cheesy.`;
 
-    const message = await callClaude(systemPrompt, userPrompt, 300);
+    const message = await callGemini(systemPrompt, userPrompt, 300);
 
     // Save session
     await query(
@@ -439,7 +437,7 @@ const homeworkScanner = async (req, res, next) => {
     const systemPrompt = 'You are a patient tutor who helps students understand homework problems by explaining step-by-step.';
     const userPrompt = `A student photographed this homework problem:\n\n"${extracted_text}"\n\nPlease: 1) Identify what type of problem this is, 2) Solve it step-by-step if applicable, 3) Explain the key concept being tested. Be thorough but clear.`;
 
-    const solution = await callClaude(systemPrompt, userPrompt, 1000);
+    const solution = await callGemini(systemPrompt, userPrompt, 1000);
     res.json({ solution });
   } catch (err) {
     next(err);
@@ -457,7 +455,7 @@ const generateFlashcardsFromText = async (req, res, next) => {
       ? `Create 5-10 flashcards from this text:\n${text}\n\nJSON: [{"front": "...", "back": "..."}, ...]`
       : `Create 8 flashcards for the topic: "${topic}"\n\nJSON: [{"front": "...", "back": "..."}, ...]`;
 
-    const response = await callClaude(systemPrompt, userPrompt, 1200);
+    const response = await callGemini(systemPrompt, userPrompt, 1200);
 
     let cards = [];
     if (!response.includes('[AI placeholder')) {
@@ -468,7 +466,7 @@ const generateFlashcardsFromText = async (req, res, next) => {
         cards = [];
       }
     } else {
-      cards = [{ front: 'Add ANTHROPIC_API_KEY', back: 'To enable AI flashcard generation from text' }];
+      cards = [{ front: 'Add GEMINI_API_KEY', back: 'To enable AI flashcard generation from text' }];
     }
 
     const inserted = [];
