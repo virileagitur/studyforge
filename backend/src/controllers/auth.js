@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const https = require('https');
 const { query } = require('../db');
 
 const COOKIE_OPTIONS = {
@@ -75,10 +76,10 @@ const register = async (req, res, next) => {
     const role = isConfiguredAdmin(email) ? 'admin' : 'user';
 
     const result = await query(
-      `INSERT INTO users (name, email, password_hash, role, school, grade_level, subjects)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, name, email, role, school, grade_level, subjects, created_at`,
-      [name.trim(), email.toLowerCase().trim(), password_hash, role, school || null, grade_level || null, subjects || []]
+      `INSERT INTO users (name, email, password_hash, role, school, grade_level, subjects, profile_image)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, name, email, role, school, grade_level, subjects, profile_image, created_at`,
+      [name.trim(), email.toLowerCase().trim(), password_hash, role, school || null, grade_level || null, subjects || [], null]
     );
 
     const user = result.rows[0];
@@ -112,6 +113,7 @@ const login = async (req, res, next) => {
         school: null,
         grade_level: null,
         subjects: [],
+        profile_image: null,
         created_at: new Date().toISOString(),
       };
     } else {
@@ -163,7 +165,7 @@ const me = async (req, res, next) => {
     }
 
     const result = await query(
-      'SELECT id, name, email, role, school, grade_level, subjects, created_at FROM users WHERE id = $1',
+      'SELECT id, name, email, role, school, grade_level, subjects, profile_image, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     if (result.rows.length === 0) {
@@ -183,12 +185,12 @@ const me = async (req, res, next) => {
 
 const updateProfile = async (req, res, next) => {
   try {
-    const { name, school, grade_level, subjects } = req.body;
+    const { name, school, grade_level, subjects, profile_image } = req.body;
     const result = await query(
-      `UPDATE users SET name=$1, school=$2, grade_level=$3, subjects=$4
-       WHERE id=$5
-       RETURNING id, name, email, role, school, grade_level, subjects, created_at`,
-      [name, school || null, grade_level || null, subjects || [], req.user.id]
+      `UPDATE users SET name=$1, school=$2, grade_level=$3, subjects=$4, profile_image=$5
+       WHERE id=$6
+       RETURNING id, name, email, role, school, grade_level, subjects, profile_image, created_at`,
+      [name, school || null, grade_level || null, subjects || [], profile_image || null, req.user.id]
     );
     res.json({ user: result.rows[0] });
   } catch (err) {
@@ -196,4 +198,77 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, logout, me, updateProfile };
+const verifyGoogleToken = (idToken) => {
+  return new Promise((resolve, reject) => {
+    https.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`, (res) => {
+      let body = '';
+      res.on('data', (chunk) => body += chunk);
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          resolve(JSON.parse(body));
+        } else {
+          try {
+            reject(new Error(JSON.parse(body).error_description || 'Google token verification failed'));
+          } catch {
+            reject(new Error('Google token verification failed'));
+          }
+        }
+      });
+    }).on('error', reject);
+  });
+};
+
+const googleLogin = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ error: 'Google credential (token) is required.' });
+    }
+
+    const payload = await verifyGoogleToken(credential);
+    const email = payload.email?.toLowerCase().trim();
+    const name = payload.name;
+    const googlePicture = payload.picture;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email not provided by Google account.' });
+    }
+
+    let user;
+    const existing = await query('SELECT * FROM users WHERE email = $1', [email]);
+
+    if (existing.rows.length > 0) {
+      user = existing.rows[0];
+      if (!user.profile_image && googlePicture) {
+        const updateResult = await query(
+          'UPDATE users SET profile_image = $1 WHERE id = $2 RETURNING *',
+          [googlePicture, user.id]
+        );
+        user = updateResult.rows[0];
+      }
+      user.role = await promoteToAdminIfConfigured(user.id, user.email);
+    } else {
+      const role = isConfiguredAdmin(email) ? 'admin' : 'user';
+      const dummyPassword = Math.random().toString(36).slice(-10) + Date.now();
+      const password_hash = await bcrypt.hash(dummyPassword, 12);
+
+      const insertResult = await query(
+        `INSERT INTO users (name, email, password_hash, role, profile_image)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, name, email, role, school, grade_level, subjects, profile_image, created_at`,
+        [name, email, password_hash, role, googlePicture || null]
+      );
+      user = insertResult.rows[0];
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.cookie('token', token, COOKIE_OPTIONS);
+
+    const { password_hash, ...safeUser } = user;
+    res.json({ user: safeUser, token });
+  } catch (err) {
+    res.status(401).json({ error: err.message || 'Google authentication failed.' });
+  }
+};
+
+module.exports = { register, login, logout, me, updateProfile, googleLogin };

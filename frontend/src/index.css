@@ -144,3 +144,11 @@ input, select, textarea {
   padding: 2px 8px;
   border-radius: 4px;
 }
+
+/* Contenteditable placeholder */
+[contenteditable=true]:empty:before {
+  content: attr(placeholder);
+  color: #9CA3AF;
+  pointer-events: none;
+  display: block;
+}

@@ -91,7 +91,7 @@ export default function NotesPage() {
                   {note.subject && <Badge label={note.subject} color="orange" />}
                   {note.content && (
                     <p className="text-sm mt-2 line-clamp-3" style={{ color: '#4A4A4A' }}>
-                      {note.content.replace(/<[^>]+>/g, '').substring(0, 120)}...
+                      {note.content.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 120)}...
                     </p>
                   )}
                   <p className="text-xs mt-2" style={{ color: '#6B7280' }}>

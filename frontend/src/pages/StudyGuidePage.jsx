@@ -2,7 +2,24 @@ import React, { useState } from 'react';
 import api from '../lib/api';
 import { PageHeader, Card, Button, Input, Select, Alert, Spinner } from '../components/ui';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
-import SearchIcon from '@mui/icons-material/Search';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+
+function MarkdownText({ content }) {
+  if (!content) return null;
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={{
+        p: ({node, ...props}) => <span {...props} />, // render as inline span to not disrupt layout
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
 
 export default function StudyGuidePage() {
   const [topic, setTopic] = useState('');
@@ -61,7 +78,22 @@ export default function StudyGuidePage() {
         </div>
       )}
 
-      {guide && (
+      {/* Fallback for unparseable raw responses */}
+      {guide && guide.error && (
+        <Card className="p-6">
+          <h3 className="text-lg font-bold text-red-500 mb-3">AI Response Formatting Issue</h3>
+          <p className="text-sm mb-4" style={{ color: '#4A4A4A' }}>
+            The AI returned content, but we couldn't parse it into key concepts and terms automatically. You can read the raw response below:
+          </p>
+          <div className="bg-gray-50 rounded-xl p-6 text-sm leading-relaxed" style={{ fontFamily: 'Georgia, Cambria, serif', whiteSpace: 'pre-wrap', color: '#1A1A1A' }}>
+            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              {guide.raw_content}
+            </ReactMarkdown>
+          </div>
+        </Card>
+      )}
+
+      {guide && !guide.error && (
         <div className="space-y-6">
           <h2 className="text-xl font-bold" style={{ color: '#1A1A1A' }}>
             Study Guide: {guide.topic}
@@ -72,11 +104,13 @@ export default function StudyGuidePage() {
             {guide.key_concepts?.length > 0 && (
               <Card>
                 <h3 className="text-base font-semibold mb-4" style={{ color: '#F97316' }}>Key Concepts</h3>
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {guide.key_concepts.map((c, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
-                      <span className="mt-1 w-5 h-5 rounded-full bg-orange-100 text-orange-600 text-xs flex items-center justify-center flex-shrink-0 font-semibold">{i+1}</span>
-                      <span style={{ color: '#1A1A1A' }}>{c}</span>
+                      <span className="mt-0.5 w-5 h-5 rounded-full bg-orange-100 text-orange-600 text-xs flex items-center justify-center flex-shrink-0 font-semibold">{i+1}</span>
+                      <span style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>
+                        <MarkdownText content={c} />
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -87,11 +121,13 @@ export default function StudyGuidePage() {
             {guide.important_terms?.length > 0 && (
               <Card>
                 <h3 className="text-base font-semibold mb-4" style={{ color: '#F97316' }}>Important Terms</h3>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {guide.important_terms.map((t, i) => (
-                    <div key={i} className="border-b border-gray-100 pb-2 last:border-0">
-                      <p className="font-semibold text-sm" style={{ color: '#1A1A1A' }}>{t.term}</p>
-                      <p className="text-sm" style={{ color: '#4A4A4A' }}>{t.definition}</p>
+                    <div key={i} className="border-b border-gray-100 pb-3 last:border-0">
+                      <p className="font-semibold text-sm mb-0.5" style={{ color: '#1A1A1A' }}>{t.term}</p>
+                      <p className="text-sm" style={{ color: '#4A4A4A', fontFamily: 'Georgia, Cambria, serif' }}>
+                        <MarkdownText content={t.definition} />
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -106,11 +142,13 @@ export default function StudyGuidePage() {
               <div className="space-y-4">
                 {guide.practice_questions.map((q, i) => (
                   <div key={i} className="border-b border-gray-100 pb-4 last:border-0">
-                    <p className="font-medium text-sm mb-2" style={{ color: '#1A1A1A' }}>{i+1}. {q.question}</p>
+                    <p className="font-medium text-sm mb-2" style={{ color: '#1A1A1A' }}>
+                      {i+1}. <MarkdownText content={q.question} />
+                    </p>
                     <details>
                       <summary className="text-xs text-orange-500 cursor-pointer hover:text-orange-600 select-none font-medium">Show answer</summary>
-                      <div className="mt-2 p-3 rounded-lg text-sm" style={{ background: '#FEF3C7', color: '#1A1A1A' }}>
-                        {q.answer}
+                      <div className="mt-2 p-3 rounded-lg text-sm leading-relaxed" style={{ background: '#FEF3C7', color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>
+                        <MarkdownText content={q.answer} />
                       </div>
                     </details>
                   </div>
@@ -127,7 +165,7 @@ export default function StudyGuidePage() {
                 {guide.recommended_resources.map((r, i) => (
                   <li key={i} className="text-sm flex items-start gap-2">
                     <span className="text-orange-400 mt-0.5">•</span>
-                    <span style={{ color: '#1A1A1A' }}>{r}</span>
+                    <span style={{ color: '#1A1A1A' }}><MarkdownText content={r} /></span>
                   </li>
                 ))}
               </ul>

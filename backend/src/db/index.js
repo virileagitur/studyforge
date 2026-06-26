@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
   school VARCHAR(255),
   grade_level VARCHAR(100),
   subjects TEXT[] DEFAULT '{}',
+  profile_image TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -184,6 +185,9 @@ const bootstrapDatabase = async () => {
 
     // Ensure role column exists (migration safety)
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'user'");
+
+    // Ensure profile_image column exists (migration safety)
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image TEXT");
 
     // Promote admin email to admin role
     const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();

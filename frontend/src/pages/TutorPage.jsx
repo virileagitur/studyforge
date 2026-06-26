@@ -7,6 +7,9 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
 import { formatDistanceToNow } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 export default function TutorPage() {
   const [conversations, setConversations] = useState([]);
@@ -164,8 +167,29 @@ export default function TutorPage() {
                 }
               </div>
               <div className={`max-w-[80%] px-4 py-3 rounded-xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-orange-500 text-white' : 'bg-gray-50 text-gray-900'}`}
-                style={{ whiteSpace: 'pre-wrap' }}>
-                {msg.content}
+                style={msg.role === 'user' ? { whiteSpace: 'pre-wrap' } : { fontFamily: 'Georgia, Cambria, "Times New Roman", Times, serif' }}>
+                {msg.role === 'user' ? (
+                  msg.content
+                ) : (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                      p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2" {...props} />,
+                      li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                      h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-base font-bold mb-2" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-sm font-bold mb-1" {...props} />,
+                      code: ({node, inline, ...props}) => inline
+                        ? <code className="bg-gray-200 px-1 py-0.5 rounded text-xs" {...props} />
+                        : <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto my-2"><code {...props} /></pre>
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                )}
               </div>
             </div>
           ))}

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button, Input, Alert } from '../components/ui';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -24,6 +24,44 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const handleGoogleCallback = async (response) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(response.credential);
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google login failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const initializeGoogleBtn = () => {
+      if (!window.google) return;
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '148248833989-dsk7i5a8q25f54h62g71k3s45jfl8d4a.apps.googleusercontent.com', // placeholder client ID
+        callback: handleGoogleCallback,
+      });
+      window.google.accounts.id.renderButton(
+        document.getElementById('googleSignInBtn'),
+        { theme: 'outline', size: 'large', width: '384', text: 'continue_with' }
+      );
+    };
+
+    if (window.google) {
+      initializeGoogleBtn();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeGoogleBtn;
+      document.head.appendChild(script);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: '#FFFDF7' }}>
@@ -66,6 +104,18 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+
+          {/* Divider */}
+          <div className="my-6 flex items-center justify-between">
+            <span className="border-b w-[40%]"></span>
+            <span className="text-xs text-center text-gray-400 uppercase font-semibold">or</span>
+            <span className="border-b w-[40%]"></span>
+          </div>
+
+          {/* Google Sign-in */}
+          <div className="flex justify-center min-h-[44px]">
+            <div id="googleSignInBtn" className="w-full flex justify-center"></div>
+          </div>
 
           <p className="text-center text-sm mt-6" style={{ color: '#4A4A4A' }}>
             New to StudyForge?{' '}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader, Card, Button, Input, Select, Alert } from '../components/ui';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -10,11 +10,13 @@ const COMMON_SUBJECTS = ['Math', 'Science', 'Biology', 'Chemistry', 'Physics', '
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth();
+  const fileInputRef = useRef(null);
   const [form, setForm] = useState({
     name: user?.name || '',
     school: user?.school || '',
     grade_level: user?.grade_level || '',
     subjects: user?.subjects || [],
+    profile_image: user?.profile_image || '',
   });
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
@@ -29,6 +31,41 @@ export default function ProfilePage() {
         ? f.subjects.filter(s => s !== subject)
         : [...f.subjects, subject],
     }));
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setError('');
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 120; // 120x120 is perfect size for profile image avatar
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Center crop the image into the 120x120 canvas
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+        setForm(f => ({ ...f, profile_image: dataUrl }));
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = async (e) => {
@@ -57,9 +94,23 @@ export default function ProfilePage() {
       {/* Avatar / Identity */}
       <Card>
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: '#FEF3C7' }}>
-            <AccountCircleIcon style={{ fontSize: 40, color: '#F97316' }} />
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="w-16 h-16 rounded-full flex items-center justify-center cursor-pointer hover:opacity-85 transition-opacity overflow-hidden border border-gray-200 relative group flex-shrink-0"
+            style={{ background: '#FEF3C7' }}
+            title="Click to change profile image"
+          >
+            {form.profile_image ? (
+              <img src={form.profile_image} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <AccountCircleIcon style={{ fontSize: 40, color: '#F97316' }} />
+            )}
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-[10px] text-white font-medium">Change</span>
+            </div>
           </div>
+          <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
+
           <div>
             <p className="font-semibold text-lg" style={{ color: '#1A1A1A' }}>{user?.name}</p>
             <p className="text-sm" style={{ color: '#4A4A4A' }}>{user?.email}</p>
@@ -143,7 +194,7 @@ export default function ProfilePage() {
           <div>
             <p className="font-semibold text-sm mb-1" style={{ color: '#1A1A1A' }}>Enable AI Features</p>
             <p className="text-sm" style={{ color: '#4A4A4A' }}>
-              AI features require an Anthropic API key. Add it to your backend <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">.env</code> file as <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">ANTHROPIC_API_KEY</code>.
+              AI features are fully integrated using Google Gemini 2.5 Flash on Vercel.
             </p>
           </div>
         </div>

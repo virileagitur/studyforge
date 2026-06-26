@@ -14,15 +14,19 @@ const getClient = () => {
 const MODEL = 'gemini-2.5-flash';
 
 // Call Gemini or return a placeholder if no API key is set
-const callGemini = async (systemPrompt, userPrompt, maxTokens = 1000) => {
+const callGemini = async (systemPrompt, userPrompt, maxTokens = 1000, jsonMode = false) => {
   const client = getClient();
   if (!client) {
     return '[AI placeholder — add your GEMINI_API_KEY to enable real AI responses]';
   }
+  const generationConfig = { maxOutputTokens: maxTokens };
+  if (jsonMode) {
+    generationConfig.responseMimeType = 'application/json';
+  }
   const model = client.getGenerativeModel({
     model: MODEL,
     systemInstruction: systemPrompt,
-    generationConfig: { maxOutputTokens: maxTokens },
+    generationConfig,
   });
   const result = await model.generateContent(userPrompt);
   return result.response.text();
@@ -162,7 +166,7 @@ const smartPrioritize = async (req, res, next) => {
     const systemPrompt = `You are an AI academic prioritization expert. Analyze the student's task list and identify the single most important task to do RIGHT NOW. Consider urgency, priority, and impact. Respond in JSON format only.`;
     const userPrompt = `Here are my pending tasks:\n${taskList}\n\nRespond with JSON: { "task_name": "...", "reason": "1-2 sentence motivating explanation of why this task needs attention now" }`;
 
-    const response = await callGemini(systemPrompt, userPrompt, 300);
+    const response = await callGemini(systemPrompt, userPrompt, 300, true);
 
     let result = { task_name: tasks.rows[0].title, reason: 'This is your highest priority upcoming task.' };
     try {
@@ -199,7 +203,7 @@ Respond with this exact JSON structure:
 
 Include 5-8 key concepts, 8-10 important terms, exactly 10 practice questions with answers, and 3-5 recommended resources.`;
 
-    const response = await callGemini(systemPrompt, userPrompt, 2000);
+        const response = await callGemini(systemPrompt, userPrompt, 2000, true);
 
     let guide;
     if (response.includes('[AI placeholder')) {
@@ -251,7 +255,8 @@ const summarizeResearch = async (req, res, next) => {
 const generateFlashcardsFromResearch = async (req, res, next) => {
   try {
     const { research_id } = req.params;
-    const { deck_id } = req.body;
+    const { deck_id, count } = req.body;
+    const cardCount = parseInt(count) || 8;
 
     const result = await query('SELECT * FROM research_items WHERE id=$1 AND user_id=$2', [research_id, req.user.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Research item not found.' });
@@ -260,9 +265,9 @@ const generateFlashcardsFromResearch = async (req, res, next) => {
     const content = item.content || item.notes || item.title;
 
     const systemPrompt = `You are a flashcard creation expert for students. Generate effective study flashcards. Respond in JSON only.`;
-    const userPrompt = `Create 5-8 flashcards from this content:\nTitle: ${item.title}\nContent: ${content}\n\nRespond with JSON array: [{"front": "question or term", "back": "answer or definition"}, ...]`;
+    const userPrompt = `Create exactly ${cardCount} flashcards from this content:\nTitle: ${item.title}\nContent: ${content}\n\nRespond with JSON array: [{"front": "question or term", "back": "answer or definition"}, ...]`;
 
-    const response = await callGemini(systemPrompt, userPrompt, 1000);
+    const response = await callGemini(systemPrompt, userPrompt, 1500, true);
 
     let cards = [];
     if (!response.includes('[AI placeholder')) {
@@ -321,7 +326,7 @@ const generateQuizFromNote = async (req, res, next) => {
     const systemPrompt = 'You are an expert at creating educational quiz questions. Respond in JSON only.';
     const userPrompt = `Create 5 quiz questions from this note:\nTitle: ${note.title}\nContent: ${note.content}\n\nRespond with JSON: [{"question": "...", "answer": "...", "type": "short_answer"}, ...]`;
 
-    const response = await callGemini(systemPrompt, userPrompt, 800);
+    const response = await callGemini(systemPrompt, userPrompt, 800, true);
 
     let quiz = [];
     if (!response.includes('[AI placeholder')) {
@@ -447,15 +452,16 @@ const homeworkScanner = async (req, res, next) => {
 // --- Generate Flashcards from Text ---
 const generateFlashcardsFromText = async (req, res, next) => {
   try {
-    const { text, topic, deck_id, subject } = req.body;
+    const { text, topic, deck_id, subject, count } = req.body;
     if (!text && !topic) return res.status(400).json({ error: 'Text or topic is required.' });
 
+    const cardCount = parseInt(count) || 8;
     const systemPrompt = 'You are a flashcard creation expert. Generate effective study flashcards. Respond in JSON only.';
     const userPrompt = text
-      ? `Create 5-10 flashcards from this text:\n${text}\n\nJSON: [{"front": "...", "back": "..."}, ...]`
-      : `Create 8 flashcards for the topic: "${topic}"\n\nJSON: [{"front": "...", "back": "..."}, ...]`;
+      ? `Create exactly ${cardCount} flashcards from this text:\n${text}\n\nJSON: [{"front": "...", "back": "..."}, ...]`
+      : `Create exactly ${cardCount} flashcards for the topic: "${topic}"\n\nJSON: [{"front": "...", "back": "..."}, ...]`;
 
-    const response = await callGemini(systemPrompt, userPrompt, 1200);
+    const response = await callGemini(systemPrompt, userPrompt, 1500, true);
 
     let cards = [];
     if (!response.includes('[AI placeholder')) {
