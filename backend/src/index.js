@@ -87,9 +87,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`StudyForge API running on port ${PORT}`);
-});
+// Only start the HTTP server when running locally (not on Vercel serverless)
+if (process.env.VERCEL !== '1') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`StudyForge API running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
