@@ -11,7 +11,7 @@ const getClient = () => {
   return genAI;
 };
 
-const MODEL = 'gemini-1.5-flash';
+const MODEL = 'gemini-2.0-flash';
 
 // Call Gemini or return a placeholder if no API key is set
 const callGemini = async (systemPrompt, userPrompt, maxTokens = 1000) => {
