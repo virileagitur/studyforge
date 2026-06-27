@@ -54,9 +54,12 @@ export default function AppLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-[#EBE6DE]">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Academic Co-pilot</p>
+      <div className="px-6 py-5 border-b border-[#EBE6DE] flex items-center gap-2.5">
+        <img src="/favicon.svg" alt="StudyForge Logo" className="w-6 h-6 flex-shrink-0" />
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Academic Co-pilot</p>
+        </div>
       </div>
 
       {/* Nav */}
@@ -138,7 +141,10 @@ export default function AppLayout() {
           <div className="absolute inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col" style={{ boxShadow: '4px 0 16px rgba(0,0,0,0.1)' }}>
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#EBE6DE]">
-              <h1 className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
+              <div className="flex items-center gap-2">
+                <img src="/favicon.svg" alt="StudyForge Logo" className="w-5 h-5 flex-shrink-0" />
+                <h1 className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
+              </div>
               <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
                 <CloseIcon />
               </button>
@@ -157,7 +163,10 @@ export default function AppLayout() {
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <MenuIcon />
           </button>
-          <h1 className="text-lg font-bold flex-1" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
+          <div className="flex items-center gap-2 flex-1">
+            <img src="/favicon.svg" alt="StudyForge Logo" className="w-5 h-5 flex-shrink-0" />
+            <h1 className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
+          </div>
           <NavLink to="/profile">
             {user?.profile_image ? (
               <img

@@ -89,8 +89,8 @@ export default function LandingPage() {
       {/* Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#EBE6DE] shadow-sm">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <AutoStoriesIcon style={{ color: '#8DA9A0' }} />
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img src="/favicon.svg" alt="StudyForge" className="w-7 h-7 flex-shrink-0" />
             <span className="font-bold text-xl font-display tracking-tight text-[#2C2C2C]">StudyForge</span>
           </div>
 
@@ -344,7 +344,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 md:px-6 grid md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <AutoStoriesIcon style={{ color: '#8DA9A0' }} />
+              <img src="/favicon.svg" alt="StudyForge" className="w-6 h-6 flex-shrink-0" />
               <span className="font-bold text-lg">StudyForge</span>
             </div>
             <p className="text-sm text-[#6B6B6B]">

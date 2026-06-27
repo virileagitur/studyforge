@@ -69,7 +69,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ background: 'var(--color-primary-bg)' }}>
-            <AutoStoriesIcon style={{ color: '#8DA9A0', fontSize: 32 }} />
+            <img src="/favicon.svg" alt="StudyForge Logo" className="w-8 h-8" />
           </div>
           <h1 className="text-3xl font-bold" style={{ color: '#2C2C2C' }}>StudyForge</h1>
           <p className="text-sm mt-1" style={{ color: '#4A4A4A' }}>Sign in to your academic co-pilot</p>
