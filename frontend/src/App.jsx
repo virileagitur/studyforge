@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 import AppLayout from './components/layout/AppLayout';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -17,14 +18,15 @@ import StudyGuidePage from './pages/StudyGuidePage';
 import HomeworkScannerPage from './pages/HomeworkScannerPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
+import OnboardingPage from './pages/OnboardingPage';
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="flex items-center justify-center min-h-screen" style={{ background: '#FFFDF7' }}>
+    <div className="flex items-center justify-center min-h-screen" style={{ background: '#F5F0E8' }}>
       <div className="text-center">
-        <div className="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-text-secondary">Loading StudyForge...</p>
+        <div className="w-10 h-10 border-4 border-[#8DA9A0] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-[#4A4A4A]">Loading StudyForge...</p>
       </div>
     </div>
   );
@@ -35,8 +37,20 @@ function RequireAuth({ children }) {
 function GuestOnly({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    const slug = encodeURIComponent(user.name?.toLowerCase().replace(/\s+/g, '-'));
+    return <Navigate to={`/${slug}/dashboard`} replace />;
+  }
   return children;
+}
+
+function WildcardRoute() {
+  const { user } = useAuth();
+  if (user) {
+    const slug = encodeURIComponent(user.name?.toLowerCase().replace(/\s+/g, '-'));
+    return <Navigate to={`/${slug}/dashboard`} replace />;
+  }
+  return <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -44,11 +58,13 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
           <Route path="/register" element={<GuestOnly><RegisterPage /></GuestOnly>} />
 
+          {/* Authenticated Application Shell */}
           <Route path="/" element={<RequireAuth><AppLayout /></RequireAuth>}>
-            <Route index element={<DashboardPage />} />
+            <Route path=":name/dashboard" element={<DashboardPage />} />
             <Route path="tasks" element={<TasksPage />} />
             <Route path="research" element={<ResearchPage />} />
             <Route path="books" element={<BooksPage />} />
@@ -60,9 +76,10 @@ export default function App() {
             <Route path="homework-scanner" element={<HomeworkScannerPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="admin" element={<AdminPage />} />
+            <Route path="onboarding" element={<OnboardingPage />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<WildcardRoute />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

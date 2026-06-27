@@ -1,53 +1,134 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design Tokens ── */
 :root {
-  --color-orange: #F97316;
-  --color-orange-light: #FB923C;
-  --color-orange-hover: #EA6C0A;
-  --color-yellow: #FACC15;
-  --color-yellow-light: #FDE047;
-  --color-yellow-accent: #FEF3C7;
-  --color-bg-warm: #FFFDF7;
-  --color-bg-card: #FFFBF5;
-  --color-text-primary: #1A1A1A;
+  /* Brand — Study-Friendly Palette */
+  --color-primary: #8DA9A0;
+  --color-primary-dark: #7A958E;
+  --color-primary-light: #B0C8C2;
+  --color-primary-bg: #EEF4F2;
+
+  --color-secondary: #D4A857;
+  --color-secondary-dark: #C49A47;
+  --color-secondary-light: #E4C07A;
+  --color-secondary-bg: #FBF4E6;
+
+  /* Backgrounds */
+  --color-background: #F5F0E8;
+  --color-card: #FFFFFF;
+  --color-card-warm: #FDFAF5;
+
+  /* Text */
+  --color-text: #2C2C2C;
   --color-text-secondary: #4A4A4A;
-  --color-text-muted: #6B7280;
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.10);
+  --color-text-muted: #6B6B6B;
+
+  /* Accents */
+  --color-accent: #5F8B8B;
+  --color-cta: #E8A87C;
+  --color-cta-dark: #D4946A;
+
+  /* Borders */
+  --color-border: #EBE6DE;
+  --color-border-focus: #8DA9A0;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.11);
+  --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.14);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  font-size: 16px;
+}
+
+/* ── Base Typography ── */
 body {
-  font-family: 'Nunito', Verdana, Arial, sans-serif;
+  font-family: 'Inter', 'Open Sans', Verdana, sans-serif;
   font-size: 1rem;
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-warm);
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
 }
 
-h1 { font-size: 2rem; font-weight: 700; }
-h2 { font-size: 1.75rem; font-weight: 700; }
-h3 { font-size: 1.5rem; font-weight: 600; }
-h4 { font-size: 1.25rem; font-weight: 600; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+  margin: 0;
+}
 
-/* Scrollbar styling */
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1.125rem; }
+h6 { font-size: 1rem; }
+
+p, span, li, label, button, input, textarea, select {
+  font-family: 'Inter', 'Open Sans', Verdana, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ── Serif Content Typography ── */
+.ai-response,
+.flashcard-content,
+.note-content,
+.study-guide-content,
+.book-summary-content {
+  font-family: 'Merriweather', 'Lora', Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+  color: var(--color-text);
+}
+
+.ai-response p,
+.flashcard-content p,
+.note-content p,
+.study-guide-content p,
+.book-summary-content p {
+  font-family: 'Merriweather', 'Lora', Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.85;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Helper / Metadata text ── */
+.metadata,
+.timestamp,
+.helper-text,
+.small-text {
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+::-webkit-scrollbar-thumb { background: #c5bfb5; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a099; }
 
-/* Card utility */
+/* ── Cards ── */
 .card {
-  background: var(--color-bg-card);
+  background: var(--color-card);
   box-shadow: var(--shadow-card);
   border-radius: 12px;
   padding: 24px;
@@ -58,97 +139,89 @@ h4 { font-size: 1.25rem; font-weight: 600; }
   transition: box-shadow 0.2s ease;
 }
 
-/* Button base */
+/* ── Buttons ── */
 .btn-primary {
-  background-color: var(--color-orange);
+  background-color: var(--color-primary);
   color: white;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   min-height: 44px;
   transition: background-color 0.15s ease;
 }
 
-.btn-primary:hover {
-  background-color: var(--color-orange-hover);
-}
+.btn-primary:hover { background-color: var(--color-primary-dark); }
 
 .btn-secondary {
-  background-color: var(--color-yellow);
-  color: var(--color-text-primary);
+  background-color: var(--color-secondary);
+  color: var(--color-text);
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   min-height: 44px;
   transition: background-color 0.15s ease;
 }
 
-.btn-secondary:hover {
-  background-color: var(--color-yellow-light);
-}
+.btn-secondary:hover { background-color: var(--color-secondary-dark); }
 
-/* Form inputs */
+/* ── Form Inputs ── */
 input, select, textarea {
-  font-family: 'Nunito', Verdana, Arial, sans-serif;
+  font-family: 'Inter', 'Open Sans', Verdana, sans-serif;
   font-size: 1rem;
 }
 
-/* Focus styles */
+/* ── Focus Styles ── */
 *:focus-visible {
-  outline: 2px solid var(--color-orange);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-/* Transitions */
-.transition-default {
-  transition: all 0.15s ease;
-}
+/* ── Transitions ── */
+.transition-default { transition: all 0.15s ease; }
 
-/* Priority badges */
-.badge-high {
-  background: #FEE2E2;
-  color: #DC2626;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
+/* ── Priority Badges ── */
+.badge-high { background:#FEE2E2; color:#DC2626; font-size:0.875rem; font-weight:600; padding:2px 8px; border-radius:4px; }
+.badge-medium { background:#FEF3C7; color:#D97706; font-size:0.875rem; font-weight:600; padding:2px 8px; border-radius:4px; }
+.badge-low { background:#D1FAE5; color:#059669; font-size:0.875rem; font-weight:600; padding:2px 8px; border-radius:4px; }
+.badge-status { font-size:0.875rem; font-weight:500; padding:2px 8px; border-radius:4px; }
 
-.badge-medium {
-  background: #FEF3C7;
-  color: #D97706;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.badge-low {
-  background: #D1FAE5;
-  color: #059669;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.badge-status {
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-/* Contenteditable placeholder */
+/* ── Contenteditable Placeholder ── */
 [contenteditable=true]:empty:before {
   content: attr(placeholder);
   color: #9CA3AF;
   pointer-events: none;
   display: block;
 }
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.55s ease forwards; }
+.animate-fade-in { animation: fadeIn 0.4s ease forwards; }
+.animate-slide-down { animation: slideDown 0.3s ease forwards; }
+
+/* ── Stagger animation delays for landing page ── */
+.delay-100 { animation-delay: 0.1s; opacity: 0; }
+.delay-200 { animation-delay: 0.2s; opacity: 0; }
+.delay-300 { animation-delay: 0.3s; opacity: 0; }
+.delay-400 { animation-delay: 0.4s; opacity: 0; }
+.delay-500 { animation-delay: 0.5s; opacity: 0; }

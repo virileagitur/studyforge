@@ -4,218 +4,540 @@ import { PageHeader, Card, Button, Input, Select, Textarea, Modal, Badge, EmptyS
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SummarizeIcon from '@mui/icons-material/Summarize';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
+import StarOutlineIcon from '@mui/icons-material/StarOutline';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import SearchIcon from '@mui/icons-material/Search';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ReactMarkdown from 'react-markdown';
 
 const STATUSES = ['want_to_read', 'reading', 'finished'];
-const EMPTY_FORM = { title: '', author: '', subject: '', status: 'want_to_read', rating: '', progress_percent: 0, notes: '' };
+const SUBJECTS = ['Literature', 'Biology', 'Chemistry', 'Physics', 'Math', 'History', 'Psychology', 'Computer Science', 'Economics', 'Philosophy', 'Art', 'Music'];
+
+const EMPTY_FORM = {
+  title: '', author: '', subject: '', status: 'want_to_read', rating: '', progress_percent: 0,
+  notes: '', book_cover_url: '', description: '', publisher: '', page_count: '', isbn: '',
+  genres: [], language: '', is_favorite: false, tags: []
+};
+
+function StarRating({ value, onChange }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star === value ? 0 : star)}
+          className="text-[#D4A857] hover:scale-110 transition-transform"
+        >
+          {value >= star ? <StarIcon fontSize="small" /> : <StarOutlineIcon fontSize="small" />}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function BooksPage() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [summaryModal, setSummaryModal] = useState(null);
   const [editBook, setEditBook] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('');
-  const [chapterText, setChapterText] = useState('');
-  const [chapterName, setChapterName] = useState('');
+  const [filters, setFilters] = useState({ status: '', subject: '' });
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summary, setSummary] = useState('');
+
+  // OpenLibrary search state
+  const [isbnQuery, setIsbnQuery] = useState('');
+  const [isbnLoading, setIsbnLoading] = useState(false);
+  const [isbnResult, setIsbnResult] = useState(null);
 
   const fetchBooks = async () => {
     try {
-      const params = filterStatus ? { status: filterStatus } : {};
+      const params = {};
+      if (filters.status) params.status = filters.status;
+      if (filters.subject) params.subject = filters.subject;
       const res = await api.get('/books', { params });
       setBooks(res.data.books);
-    } catch { setError('Failed to load books.'); }
-    finally { setLoading(false); }
+    } catch {
+      setError('Failed to load books.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchBooks(); }, [filterStatus]);
+  useEffect(() => { fetchBooks(); }, [filters]);
 
-  const openAdd = () => { setForm(EMPTY_FORM); setEditBook(null); setModalOpen(true); };
+  const openAdd = () => { setForm(EMPTY_FORM); setEditBook(null); setIsbnResult(null); setIsbnQuery(''); setModalOpen(true); };
   const openEdit = (b) => {
-    setForm({ title: b.title, author: b.author || '', subject: b.subject || '', status: b.status, rating: b.rating || '', progress_percent: b.progress_percent || 0, notes: b.notes || '' });
+    setForm({
+      title: b.title, author: b.author || '', subject: b.subject || '', status: b.status,
+      rating: b.rating || '', progress_percent: b.progress_percent || 0, notes: b.notes || '',
+      book_cover_url: b.book_cover_url || '', description: b.description || '',
+      publisher: b.publisher || '', page_count: b.page_count || '', isbn: b.isbn || '',
+      genres: b.genres || [], language: b.language || '', is_favorite: b.is_favorite || false,
+      tags: b.tags || []
+    });
     setEditBook(b);
+    setIsbnResult(null);
+    setIsbnQuery('');
     setModalOpen(true);
+  };
+
+  const openDetail = (book) => {
+    setSelectedBook(book);
+    setDetailOpen(true);
+  };
+
+  const handleISBNLookup = async () => {
+    if (!isbnQuery.trim()) return;
+    setIsbnLoading(true);
+    setIsbnResult(null);
+    try {
+      const res = await api.get(`/books/isbn/${isbnQuery.replace(/[-\s]/g, '')}`);
+      const bookData = res.data.book;
+      setIsbnResult(bookData);
+      // Auto-fill form
+      setForm(f => ({
+        ...f,
+        title: bookData.title || f.title,
+        author: bookData.author || f.author,
+        publisher: bookData.publisher || f.publisher,
+        published_date: bookData.published_date || f.published_date,
+        page_count: bookData.page_count || f.page_count,
+        book_cover_url: bookData.book_cover_url || f.book_cover_url,
+        description: bookData.description || f.description,
+        genres: bookData.genres || f.genres,
+        isbn: isbnQuery.trim(),
+      }));
+    } catch {
+      setError('No book found for that ISBN. Try entering details manually.');
+    } finally {
+      setIsbnLoading(false);
+    }
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) return setError('Title is required.');
     setSaving(true);
-    const payload = { ...form, rating: form.rating ? Number(form.rating) : null, progress_percent: Number(form.progress_percent) };
     try {
+      const payload = {
+        ...form,
+        rating: form.rating ? parseInt(form.rating) : null,
+        progress_percent: parseInt(form.progress_percent) || 0,
+        page_count: form.page_count ? parseInt(form.page_count) : null,
+      };
       if (editBook) {
         const res = await api.put(`/books/${editBook.id}`, payload);
         setBooks(bs => bs.map(b => b.id === editBook.id ? res.data.book : b));
+        if (selectedBook?.id === editBook.id) setSelectedBook(res.data.book);
       } else {
         const res = await api.post('/books', payload);
         setBooks(bs => [res.data.book, ...bs]);
       }
       setModalOpen(false);
-    } catch (err) { setError(err.response?.data?.error || 'Failed to save.'); }
-    finally { setSaving(false); }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save book.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this book?')) return;
+    if (!confirm('Remove this book from your library?')) return;
     try {
       await api.delete(`/books/${id}`);
       setBooks(bs => bs.filter(b => b.id !== id));
-    } catch { setError('Failed to delete.'); }
+      if (detailOpen && selectedBook?.id === id) setDetailOpen(false);
+    } catch {
+      setError('Failed to delete book.');
+    }
   };
 
-  const handleSummarizeChapter = async () => {
-    if (!chapterText.trim()) return setError('Please paste some chapter text first.');
+  const handleGenerateSummary = async (bookId) => {
     setSummaryLoading(true);
-    setSummary('');
     try {
-      const res = await api.post(`/ai/books/${summaryModal.id}/summarize-chapter`, { chapter_text: chapterText, chapter_name: chapterName });
-      setSummary(res.data.summary);
-    } catch { setError('AI summarization failed.'); }
-    finally { setSummaryLoading(false); }
+      const res = await api.post(`/books/${bookId}/summary`);
+      const updatedBook = res.data.book;
+      setBooks(bs => bs.map(b => b.id === bookId ? updatedBook : b));
+      setSelectedBook(updatedBook);
+    } catch {
+      setError('Failed to generate AI summary.');
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  const toggleFavorite = async (book) => {
+    try {
+      const updatedFields = {
+        title: book.title, author: book.author, subject: book.subject, status: book.status,
+        rating: book.rating, progress_percent: book.progress_percent, notes: book.notes,
+        book_cover_url: book.book_cover_url, description: book.description, publisher: book.publisher,
+        page_count: book.page_count, isbn: book.isbn, genres: book.genres, language: book.language,
+        is_favorite: !book.is_favorite, tags: book.tags, summary: book.summary,
+        summary_generated: book.summary_generated
+      };
+      const res = await api.put(`/books/${book.id}`, updatedFields);
+      setBooks(bs => bs.map(b => b.id === book.id ? res.data.book : b));
+      if (selectedBook?.id === book.id) setSelectedBook(res.data.book);
+    } catch {
+      setError('Failed to update favorite.');
+    }
   };
 
   const setF = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
+  const setFilter = (key) => (e) => setFilters(f => ({ ...f, [key]: e.target.value }));
 
-  const statusGroups = { want_to_read: 'Want to Read', reading: 'Currently Reading', finished: 'Finished' };
+  const statusColor = { want_to_read: 'gray', reading: 'sage', finished: 'gold' };
+  const statusBgClasses = {
+    want_to_read: 'bg-gray-100 text-gray-600',
+    reading: 'bg-[#EEF4F2] text-[#7A958E]',
+    finished: 'bg-[#FBF4E6] text-[#C49A47]'
+  };
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Book Tracker"
-        subtitle="Track your reading progress and generate summaries"
+        title="My Book Library"
+        subtitle={`${books.length} book${books.length !== 1 ? 's' : ''} in your collection`}
         action={<Button onClick={openAdd} icon={AddIcon}>Add Book</Button>}
       />
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
-      <div className="flex gap-3">
-        {['', ...STATUSES].map(s => (
-          <button
-            key={s}
-            onClick={() => setFilterStatus(s)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${filterStatus === s ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-orange-50'}`}
-            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
-          >
-            {s ? statusGroups[s] : 'All Books'}
-          </button>
-        ))}
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-center p-4 bg-white rounded-xl" style={{ boxShadow: 'var(--shadow-sm)' }}>
+        <FilterListIcon style={{ color: '#8DA9A0' }} />
+        <Select value={filters.status} onChange={setFilter('status')} className="w-40">
+          <option value="">All Reading Status</option>
+          {STATUSES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+        </Select>
+        <Select value={filters.subject} onChange={setFilter('subject')} className="w-36">
+          <option value="">All Subjects</option>
+          {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+        </Select>
+        {(filters.status || filters.subject) && (
+          <Button variant="ghost" size="sm" onClick={() => setFilters({ status: '', subject: '' })}>Clear Filters</Button>
+        )}
       </div>
 
+      {/* Book Grid */}
       {books.length === 0 ? (
-        <EmptyState icon={MenuBookIcon} title="No books yet" description="Start tracking your reading list — textbooks, novels, study guides." action={<Button onClick={openAdd} icon={AddIcon}>Add Book</Button>} />
+        <EmptyState
+          icon={MenuBookIcon}
+          title="No books yet"
+          description="Build your reading library. Search by ISBN or add books manually."
+          action={<Button onClick={openAdd} icon={AddIcon}>Add Your First Book</Button>}
+        />
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {books.map(book => (
-            <Card key={book.id}>
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-base leading-tight" style={{ color: '#1A1A1A' }}>{book.title}</h3>
-                  {book.author && <p className="text-sm mt-0.5" style={{ color: '#4A4A4A' }}>by {book.author}</p>}
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => { setSummaryModal(book); setSummary(''); setChapterText(''); setChapterName(''); }} className="p-1.5 rounded-lg hover:bg-orange-50 text-gray-400 hover:text-orange-500 transition-colors" title="AI Chapter Summary">
-                    <SummarizeIcon fontSize="small" />
+            <div
+              key={book.id}
+              className="bg-white rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all hover:-translate-y-0.5 relative"
+              style={{ boxShadow: 'var(--shadow-card)' }}
+              onClick={() => openDetail(book)}
+            >
+              {/* Cover Image */}
+              <div className="h-44 bg-gradient-to-br from-[#EEF4F2] to-[#F5F0E8] flex items-center justify-center relative">
+                {book.book_cover_url ? (
+                  <img
+                    src={book.book_cover_url}
+                    alt={book.title}
+                    className="h-full w-full object-cover"
+                    onError={e => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <AutoStoriesIcon style={{ fontSize: 56, color: '#B0C8C2' }} />
+                )}
+                {/* Favorite Heart */}
+                <button
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white transition-colors z-10"
+                  onClick={e => { e.stopPropagation(); toggleFavorite(book); }}
+                  title={book.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {book.is_favorite
+                    ? <FavoriteIcon style={{ color: '#E05050', fontSize: 18 }} />
+                    : <FavoriteBorderIcon style={{ color: '#9CA3AF', fontSize: 18 }} />
+                  }
+                </button>
+                {/* Status badge */}
+                <span className={`absolute bottom-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full ${statusBgClasses[book.status]}`}>
+                  {book.status.replace(/_/g, ' ')}
+                </span>
+              </div>
+
+              {/* Info */}
+              <div className="p-4 space-y-2">
+                <h3 className="font-semibold text-sm leading-tight line-clamp-2" style={{ color: 'var(--color-text)' }}>
+                  {book.title}
+                </h3>
+                {book.author && (
+                  <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>by {book.author}</p>
+                )}
+                {book.rating > 0 && (
+                  <div className="flex items-center gap-1 text-[#D4A857]">
+                    {[...Array(book.rating)].map((_, i) => <StarIcon key={i} style={{ fontSize: 14 }} />)}
+                  </div>
+                )}
+                {book.status === 'reading' && book.progress_percent > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>Progress</span>
+                      <span>{book.progress_percent}%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[#8DA9A0] transition-all"
+                        style={{ width: `${book.progress_percent}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-1 pt-1">
+                  <button
+                    onClick={e => { e.stopPropagation(); openEdit(book); }}
+                    className="p-1.5 rounded-lg hover:bg-[#EEF4F2] text-gray-400 hover:text-[#8DA9A0] transition-colors"
+                  >
+                    <EditIcon style={{ fontSize: 16 }} />
                   </button>
-                  <button onClick={() => openEdit(book)} className="p-1.5 rounded-lg hover:bg-orange-50 text-gray-400 hover:text-orange-500">
-                    <EditIcon fontSize="small" />
-                  </button>
-                  <button onClick={() => handleDelete(book.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500">
-                    <DeleteIcon fontSize="small" />
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDelete(book.id); }}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <DeleteIcon style={{ fontSize: 16 }} />
                   </button>
                 </div>
               </div>
-
-              <div className="flex flex-wrap gap-2 mb-3">
-                <Badge label={book.status} color={book.status} />
-                {book.subject && <Badge label={book.subject} color="orange" />}
-              </div>
-
-              {/* Progress bar */}
-              {book.status === 'reading' && (
-                <div className="mb-3">
-                  <div className="flex justify-between text-xs mb-1" style={{ color: '#4A4A4A' }}>
-                    <span>Progress</span><span>{book.progress_percent}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${book.progress_percent}%`, background: '#F97316' }} />
-                  </div>
-                </div>
-              )}
-
-              {/* Star rating */}
-              {book.rating && (
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(n => n <= book.rating
-                    ? <StarIcon key={n} style={{ color: '#FACC15', fontSize: 18 }} />
-                    : <StarBorderIcon key={n} style={{ color: '#D1D5DB', fontSize: 18 }} />
-                  )}
-                </div>
-              )}
-
-              {book.notes && <p className="text-xs mt-2 line-clamp-2" style={{ color: '#6B7280' }}>{book.notes}</p>}
-            </Card>
+            </div>
           ))}
         </div>
       )}
 
-      {/* Add/Edit Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editBook ? 'Edit Book' : 'Add Book'}>
-        <form onSubmit={handleSave} className="space-y-4">
-          <Input label="Title *" placeholder="e.g. The Great Gatsby" value={form.title} onChange={setF('title')} required />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Author" placeholder="Author name" value={form.author} onChange={setF('author')} />
-            <Input label="Subject / Course" placeholder="e.g. English" value={form.subject} onChange={setF('subject')} />
+      {/* Book Detail Modal */}
+      <Modal open={detailOpen} onClose={() => setDetailOpen(false)} title={selectedBook?.title || 'Book Detail'} width="max-w-2xl">
+        {selectedBook && (
+          <div className="space-y-5">
+            <div className="flex gap-5">
+              {selectedBook.book_cover_url ? (
+                <img
+                  src={selectedBook.book_cover_url}
+                  alt={selectedBook.title}
+                  className="w-24 h-36 object-cover rounded-xl flex-shrink-0 shadow-md"
+                />
+              ) : (
+                <div className="w-24 h-36 rounded-xl bg-[#EEF4F2] flex items-center justify-center flex-shrink-0">
+                  <AutoStoriesIcon style={{ fontSize: 36, color: '#B0C8C2' }} />
+                </div>
+              )}
+              <div className="space-y-2 flex-1">
+                <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{selectedBook.title}</h2>
+                {selectedBook.author && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>by {selectedBook.author}</p>}
+                {selectedBook.publisher && <p className="text-xs text-gray-400">{selectedBook.publisher}</p>}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBgClasses[selectedBook.status]}`}>
+                    {selectedBook.status.replace(/_/g, ' ')}
+                  </span>
+                  {selectedBook.subject && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#EEF4F2] text-[#7A958E] font-medium">
+                      {selectedBook.subject}
+                    </span>
+                  )}
+                </div>
+                {selectedBook.rating > 0 && (
+                  <div className="flex items-center gap-1 text-[#D4A857]">
+                    {[...Array(selectedBook.rating)].map((_, i) => <StarIcon key={i} style={{ fontSize: 16 }} />)}
+                  </div>
+                )}
+                {selectedBook.page_count && (
+                  <p className="text-xs text-gray-400">{selectedBook.page_count} pages</p>
+                )}
+              </div>
+            </div>
+
+            {selectedBook.status === 'reading' && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium">Reading Progress</span>
+                  <span className="font-bold" style={{ color: '#8DA9A0' }}>{selectedBook.progress_percent}%</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#8DA9A0]"
+                    style={{ width: `${selectedBook.progress_percent}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {selectedBook.description && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Description</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  {selectedBook.description}
+                </p>
+              </div>
+            )}
+
+            {selectedBook.notes && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">My Notes</p>
+                <p className="text-sm leading-relaxed italic" style={{ color: 'var(--color-text)' }}>
+                  {selectedBook.notes}
+                </p>
+              </div>
+            )}
+
+            {/* AI Summary Section */}
+            <div className="border-t border-[#EBE6DE] pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-bold uppercase tracking-wider text-gray-400">AI Summary</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={SmartToyIcon}
+                  onClick={() => handleGenerateSummary(selectedBook.id)}
+                  disabled={summaryLoading}
+                >
+                  {summaryLoading ? 'Generating...' : selectedBook.summary_generated ? 'Regenerate' : 'Generate Summary'}
+                </Button>
+              </div>
+              {selectedBook.summary ? (
+                <div className="book-summary-content text-sm leading-relaxed p-4 bg-[#F5F0E8] rounded-xl border border-[#EBE6DE]">
+                  <ReactMarkdown>{selectedBook.summary}</ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic">
+                  Generate an AI-powered summary and analysis of this book using the button above.
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button onClick={() => { setDetailOpen(false); openEdit(selectedBook); }} icon={EditIcon} variant="outline" size="sm">
+                Edit Details
+              </Button>
+              <Button onClick={() => handleDelete(selectedBook.id)} variant="danger" size="sm">
+                Remove Book
+              </Button>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Select label="Status" value={form.status} onChange={setF('status')}>
-              {STATUSES.map(s => <option key={s} value={s}>{statusGroups[s]}</option>)}
-            </Select>
-            <Select label="Rating (1-5)" value={form.rating} onChange={setF('rating')}>
-              <option value="">No rating</option>
-              {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} star{n > 1 ? 's' : ''}</option>)}
-            </Select>
-          </div>
-          {form.status === 'reading' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Progress ({form.progress_percent}%)</label>
-              <input type="range" min="0" max="100" value={form.progress_percent} onChange={setF('progress_percent')} className="w-full accent-orange-500" />
+        )}
+      </Modal>
+
+      {/* Add / Edit Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editBook ? 'Edit Book' : 'Add Book to Library'}
+        width="max-w-2xl"
+      >
+        <form onSubmit={handleSave} className="space-y-5">
+          {/* ISBN Lookup */}
+          {!editBook && (
+            <div className="p-4 bg-[#EEF4F2] rounded-xl border border-[#B0C8C2]/40">
+              <p className="text-sm font-bold mb-2" style={{ color: '#7A958E' }}>Quick Fill via ISBN</p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter ISBN-10 or ISBN-13..."
+                  value={isbnQuery}
+                  onChange={e => setIsbnQuery(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="primary"
+                  icon={SearchIcon}
+                  onClick={handleISBNLookup}
+                  disabled={isbnLoading || !isbnQuery.trim()}
+                  size="md"
+                >
+                  {isbnLoading ? 'Searching...' : 'Lookup'}
+                </Button>
+              </div>
+              {isbnResult && (
+                <p className="text-xs text-green-700 mt-2 font-semibold">
+                  ✓ Found: <span className="font-bold">{isbnResult.title}</span> — fields auto-filled below.
+                </p>
+              )}
+              <p className="text-xs text-gray-400 mt-1">Uses OpenLibrary API to auto-fill book details.</p>
             </div>
           )}
-          <Textarea label="Notes" placeholder="Your thoughts, key ideas..." value={form.notes} onChange={setF('notes')} rows={3} />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input label="Title *" placeholder="Book title" value={form.title} onChange={setF('title')} required />
+            <Input label="Author" placeholder="Author name" value={form.author} onChange={setF('author')} />
+            <Input label="Publisher" placeholder="Publisher name" value={form.publisher} onChange={setF('publisher')} />
+            <Input label="ISBN" placeholder="ISBN-10 or ISBN-13" value={form.isbn} onChange={setF('isbn')} />
+            <Input label="Page Count" type="number" placeholder="e.g. 320" value={form.page_count} onChange={setF('page_count')} />
+            <Input label="Book Cover URL" placeholder="https://..." value={form.book_cover_url} onChange={setF('book_cover_url')} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select label="Subject" value={form.subject} onChange={setF('subject')}>
+              <option value="">Select subject</option>
+              {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+            </Select>
+            <Select label="Reading Status" value={form.status} onChange={setF('status')}>
+              {STATUSES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+            </Select>
+          </div>
+
+          {form.status === 'reading' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reading Progress: {form.progress_percent}%</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={form.progress_percent}
+                onChange={e => setForm(f => ({ ...f, progress_percent: parseInt(e.target.value) }))}
+                className="w-full accent-[#8DA9A0]"
+              />
+            </div>
+          )}
+
+          {form.status === 'finished' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Your Rating</label>
+              <StarRating value={parseInt(form.rating) || 0} onChange={v => setForm(f => ({ ...f, rating: v }))} />
+            </div>
+          )}
+
+          <Textarea label="Description" placeholder="Book description..." value={form.description} onChange={setF('description')} rows={2} />
+          <Textarea label="Personal Notes" placeholder="Your notes about this book..." value={form.notes} onChange={setF('notes')} rows={2} />
+
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="checkbox"
+              id="is_favorite"
+              checked={form.is_favorite}
+              onChange={e => setForm(f => ({ ...f, is_favorite: e.target.checked }))}
+              className="rounded accent-[#D4A857] w-4 h-4"
+            />
+            <label htmlFor="is_favorite" className="text-sm font-medium text-gray-700 flex items-center gap-1">
+              <FavoriteIcon style={{ color: '#E05050', fontSize: 16 }} /> Add to Favorites
+            </label>
+          </div>
+
           <div className="flex gap-3 pt-2">
-            <Button type="submit" disabled={saving} className="flex-1">{saving ? 'Saving...' : editBook ? 'Save Changes' : 'Add Book'}</Button>
+            <Button type="submit" disabled={saving} className="flex-1">
+              {saving ? 'Saving...' : editBook ? 'Save Changes' : 'Add to Library'}
+            </Button>
             <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>Cancel</Button>
           </div>
         </form>
-      </Modal>
-
-      {/* Chapter Summary Modal */}
-      <Modal open={!!summaryModal} onClose={() => { setSummaryModal(null); setSummary(''); }} title={`AI Chapter Summary — ${summaryModal?.title}`} width="max-w-2xl">
-        <div className="space-y-4">
-          <Input label="Chapter name (optional)" placeholder="e.g. Chapter 3: The Conflict" value={chapterName} onChange={e => setChapterName(e.target.value)} />
-          <Textarea label="Paste chapter text" placeholder="Paste the chapter content here..." value={chapterText} onChange={e => setChapterText(e.target.value)} rows={6} />
-          <Button onClick={handleSummarizeChapter} disabled={summaryLoading} icon={SummarizeIcon}>
-            {summaryLoading ? 'Generating summary...' : 'Generate Summary'}
-          </Button>
-          {summary && (
-            <div className="p-4 rounded-xl text-sm" style={{ background: '#FEF3C7' }}>
-              <p className="font-semibold mb-2" style={{ color: '#D97706' }}>AI Summary</p>
-              <p style={{ color: '#1A1A1A', whiteSpace: 'pre-wrap' }}>{summary}</p>
-            </div>
-          )}
-        </div>
       </Modal>
     </div>
   );

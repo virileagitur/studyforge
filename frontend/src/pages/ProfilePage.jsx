@@ -1,15 +1,21 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { PageHeader, Card, Button, Input, Select, Alert } from '../components/ui';
+import api from '../lib/api';
+import { PageHeader, Card, Button, Input, Select, Alert, Modal } from '../components/ui';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SchoolIcon from '@mui/icons-material/School';
 import SaveIcon from '@mui/icons-material/Save';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 const GRADE_LEVELS = ['Elementary School', 'Middle School', 'High School', 'Undergraduate', 'Graduate', 'Self-Learner', 'Other'];
 const COMMON_SUBJECTS = ['Math', 'Science', 'Biology', 'Chemistry', 'Physics', 'English', 'History', 'Geography', 'Computer Science', 'Economics', 'Psychology', 'Art', 'Music'];
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [form, setForm] = useState({
     name: user?.name || '',
@@ -21,6 +27,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+
+  // Delete account state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteForm, setDeleteForm] = useState({ password: '', confirm: '' });
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const setF = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
 
@@ -48,18 +60,18 @@ export default function ProfilePage() {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const size = 120; // 120x120 is perfect size for profile image avatar
+        const size = 160; // 160x160 for crisp avatar rendering
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext('2d');
 
-        // Center crop the image into the 120x120 canvas
+        // Center crop the image into the canvas
         const minDim = Math.min(img.width, img.height);
         const sx = (img.width - minDim) / 2;
         const sy = (img.height - minDim) / 2;
 
         ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
 
         setForm(f => ({ ...f, profile_image: dataUrl }));
       };
@@ -84,6 +96,24 @@ export default function ProfilePage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    if (deleteForm.confirm.trim().toLowerCase() !== 'delete my account') {
+      setDeleteError('Please type "delete my account" exactly to confirm.');
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.delete('/auth/me', { data: { password: deleteForm.password, confirm: deleteForm.confirm } });
+      await logout();
+      navigate('/');
+    } catch (err) {
+      setDeleteError(err.response?.data?.error || 'Failed to delete account. Please check your password.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-2xl">
       <PageHeader title="Profile" subtitle="Manage your account information" />
@@ -93,30 +123,33 @@ export default function ProfilePage() {
 
       {/* Avatar / Identity */}
       <Card>
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-5 mb-6">
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="w-16 h-16 rounded-full flex items-center justify-center cursor-pointer hover:opacity-85 transition-opacity overflow-hidden border border-gray-200 relative group flex-shrink-0"
-            style={{ background: '#FEF3C7' }}
+            className="w-20 h-20 rounded-full flex items-center justify-center cursor-pointer hover:opacity-85 transition-opacity overflow-hidden relative group flex-shrink-0"
+            style={{ background: 'var(--color-primary-bg)', border: '3px solid var(--color-primary-light)' }}
             title="Click to change profile image"
           >
             {form.profile_image ? (
               <img src={form.profile_image} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <AccountCircleIcon style={{ fontSize: 40, color: '#F97316' }} />
+              <AccountCircleIcon style={{ fontSize: 48, color: '#8DA9A0' }} />
             )}
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-[10px] text-white font-medium">Change</span>
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+              <EditIcon style={{ color: 'white', fontSize: 20 }} />
             </div>
           </div>
           <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
 
           <div>
-            <p className="font-semibold text-lg" style={{ color: '#1A1A1A' }}>{user?.name}</p>
-            <p className="text-sm" style={{ color: '#4A4A4A' }}>{user?.email}</p>
+            <p className="font-bold text-xl" style={{ color: 'var(--color-text)' }}>{user?.name}</p>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{user?.email}</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '—'}
+            </p>
             {user?.role === 'admin' && (
-              <span className="inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: '#FFF7ED', color: '#C2410C' }}>
-                Admin access
+              <span className="inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#FBF4E6] text-[#C49A47] border border-[#E4C07A]">
+                Admin Access
               </span>
             )}
           </div>
@@ -154,8 +187,8 @@ export default function ProfilePage() {
                   onClick={() => toggleSubject(subject)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors min-h-[36px] ${
                     form.subjects.includes(subject)
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+                      ? 'bg-[#8DA9A0] text-white border border-[#7A958E]'
+                      : 'bg-gray-100 text-gray-600 hover:bg-[#EEF4F2] hover:text-[#7A958E]'
                   }`}
                 >
                   {subject}
@@ -170,35 +203,111 @@ export default function ProfilePage() {
         </form>
       </Card>
 
-      {/* Account Info */}
+      {/* Account Details */}
       <Card>
-        <h3 className="text-base font-semibold mb-4" style={{ color: '#1A1A1A' }}>Account Details</h3>
+        <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Account Details</h3>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span style={{ color: '#4A4A4A' }}>Email address</span>
-            <span className="font-medium" style={{ color: '#1A1A1A' }}>{user?.email}</span>
+            <span style={{ color: 'var(--color-text-secondary)' }}>Email address</span>
+            <span className="font-medium" style={{ color: 'var(--color-text)' }}>{user?.email}</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: '#4A4A4A' }}>Member since</span>
-            <span className="font-medium" style={{ color: '#1A1A1A' }}>
+            <span style={{ color: 'var(--color-text-secondary)' }}>Account type</span>
+            <span className="font-medium capitalize" style={{ color: 'var(--color-text)' }}>{user?.role || 'Student'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span style={{ color: 'var(--color-text-secondary)' }}>Member since</span>
+            <span className="font-medium" style={{ color: 'var(--color-text)' }}>
               {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
             </span>
           </div>
         </div>
       </Card>
 
-      {/* API Key notice */}
+      {/* AI Features notice */}
       <Card>
         <div className="flex items-start gap-3">
-          <SchoolIcon style={{ color: '#F97316', flexShrink: 0, marginTop: 2 }} />
+          <SchoolIcon style={{ color: '#8DA9A0', flexShrink: 0, marginTop: 2 }} />
           <div>
-            <p className="font-semibold text-sm mb-1" style={{ color: '#1A1A1A' }}>Enable AI Features</p>
-            <p className="text-sm" style={{ color: '#4A4A4A' }}>
-              AI features are fully integrated using Google Gemini 2.5 Flash on Vercel.
+            <p className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text)' }}>AI Features Active</p>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              AI features are powered by Google Gemini 2.5 Flash, integrated directly into the platform.
             </p>
           </div>
         </div>
       </Card>
+
+      {/* Danger Zone */}
+      <Card className="border border-red-200">
+        <div className="flex items-center gap-2 mb-3">
+          <WarningAmberIcon style={{ color: '#DC2626', fontSize: 20 }} />
+          <h3 className="text-base font-semibold text-red-600">Danger Zone</h3>
+        </div>
+        <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+          Permanently delete your account and all your data, including notes, tasks, flashcards, books, and research items. 
+          This action <strong>cannot be undone</strong>.
+        </p>
+        <Button
+          variant="danger"
+          icon={DeleteForeverIcon}
+          onClick={() => { setDeleteModalOpen(true); setDeleteForm({ password: '', confirm: '' }); setDeleteError(''); }}
+        >
+          Delete My Account
+        </Button>
+      </Card>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="⚠️ Delete Account"
+        width="max-w-md"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+            <p className="text-sm text-red-800 font-semibold mb-1">This will permanently delete:</p>
+            <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+              <li>All your notes and study guides</li>
+              <li>All flashcards and decks</li>
+              <li>All tasks and assignments</li>
+              <li>Books, research items, and tutor conversations</li>
+              <li>Your profile and account data</li>
+            </ul>
+          </div>
+
+          {deleteError && <Alert type="error" message={deleteError} onClose={() => setDeleteError('')} />}
+
+          <Input
+            label="Your password"
+            type="password"
+            placeholder="Enter your account password"
+            value={deleteForm.password}
+            onChange={e => setDeleteForm(f => ({ ...f, password: e.target.value }))}
+          />
+          <Input
+            label='Type "delete my account" to confirm'
+            type="text"
+            placeholder="delete my account"
+            value={deleteForm.confirm}
+            onChange={e => setDeleteForm(f => ({ ...f, confirm: e.target.value }))}
+          />
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              variant="danger"
+              disabled={deleting || !deleteForm.password || deleteForm.confirm.toLowerCase() !== 'delete my account'}
+              onClick={handleDeleteAccount}
+              className="flex-1"
+            >
+              {deleting ? 'Deleting...' : 'Delete My Account Forever'}
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => setDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

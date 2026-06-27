@@ -1,0 +1,16 @@
+{
+  "name": "StudyForge",
+  "short_name": "StudyForge",
+  "description": "StudyForge is your academic co-pilot, helping you build custom study guides, flashcards, and note review systems.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F0E8",
+  "theme_color": "#8DA9A0",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

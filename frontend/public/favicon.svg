@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Book background/cover -->
+  <rect x="8" y="12" width="48" height="40" rx="6" fill="#8DA9A0" stroke="#2C2C2C" stroke-width="2.5"/>
+  
+  <!-- Book spine detail -->
+  <path d="M14 12v40M16 12v40" stroke="#7A958E" stroke-width="1.5"/>
+  
+  <!-- Book pages lines (implied) -->
+  <line x1="22" y1="20" x2="46" y2="20" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  <line x1="22" y1="28" x2="46" y2="28" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  <line x1="22" y1="36" x2="46" y2="36" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  <line x1="22" y1="44" x2="38" y2="44" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  
+  <!-- Graduation cap floating above/on the book -->
+  <!-- Diamond Cap top -->
+  <polygon points="32,4 12,13 32,22 52,13" fill="#D4A857" stroke="#2C2C2C" stroke-width="2.5" stroke-linejoin="round"/>
+  
+  <!-- Cap skull band -->
+  <path d="M22 17.5v5c0 3 4.5 5 10 5s10-2 10-5v-5" fill="#C49A47" stroke="#2C2C2C" stroke-width="2.5"/>
+  
+  <!-- Tassel hanging down -->
+  <path d="M32 13c0 0 14 3 14 9.5M46 22.5c0 1.5-.5 3-1.5 3s-1.5-1.5-1.5-3 .5-3 1.5-3" stroke="#2C2C2C" stroke-width="1.5" fill="#D4A857"/>
+</svg>
