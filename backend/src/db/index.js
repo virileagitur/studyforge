@@ -189,6 +189,52 @@ const bootstrapDatabase = async () => {
     // Ensure profile_image column exists (migration safety)
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image TEXT");
 
+    // Onboarding migration columns
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255)");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS school_level VARCHAR(100)");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS study_hours_per_day INT");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_study_time VARCHAR(50)");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_reminders BOOLEAN DEFAULT TRUE");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS main_goal TEXT");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ");
+
+    // Study Guides table creation
+    await query(`
+      CREATE TABLE IF NOT EXISTS study_guides (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        topic VARCHAR(255) NOT NULL,
+        subject VARCHAR(100),
+        content JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    
+    await query(`
+      DO $$ BEGIN
+        CREATE TRIGGER update_study_guides_updated_at BEFORE UPDATE ON study_guides FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+      EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+    `);
+
+    // Books table enhancements
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS book_cover_url VARCHAR(500)");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS description TEXT");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS published_date DATE");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS publisher VARCHAR(255)");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS page_count INT");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS isbn VARCHAR(20)");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS genres TEXT[] DEFAULT '{}'");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS language VARCHAR(50)");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS summary TEXT");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS summary_generated BOOLEAN DEFAULT FALSE");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS chapters JSONB DEFAULT '[]'");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS reading_start_date DATE");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS reading_finish_date DATE");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN DEFAULT FALSE");
+    await query("ALTER TABLE books ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}'");
+
     // Promote admin email to admin role
     const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
     if (adminEmail) {

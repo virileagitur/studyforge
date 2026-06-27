@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { PageHeader, Card, Button, Input, Select, Alert, Spinner } from '../components/ui';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
@@ -13,7 +14,7 @@ function MarkdownText({ content }) {
       remarkPlugins={[remarkMath]}
       rehypePlugins={[rehypeKatex]}
       components={{
-        p: ({node, ...props}) => <span {...props} />, // render as inline span to not disrupt layout
+        p: ({node, ...props}) => <span {...props} />,
       }}
     >
       {content}
@@ -22,6 +23,7 @@ function MarkdownText({ content }) {
 }
 
 export default function StudyGuidePage() {
+  const navigate = useNavigate();
   const [topic, setTopic] = useState('');
   const [subject, setSubject] = useState('');
   const [guide, setGuide] = useState(null);
@@ -44,11 +46,34 @@ export default function StudyGuidePage() {
     }
   };
 
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const handleSave = async () => {
+    if (!guide) return;
+    setSaving(true);
+    setError('');
+    setSuccessMessage('');
+    try {
+      await api.post('/study-guides', {
+        topic: guide.topic,
+        subject: subject || 'General',
+        content: guide
+      });
+      setSuccessMessage('Study guide saved successfully! You can view it in history.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save study guide.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl">
       <PageHeader title="AI Study Guide Generator" subtitle="Enter any topic and get a comprehensive study guide instantly" />
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+      {successMessage && <Alert type="success" message={successMessage} onClose={() => setSuccessMessage('')} />}
 
       <Card>
         <form onSubmit={handleGenerate} className="flex flex-col sm:flex-row gap-4">
@@ -74,7 +99,7 @@ export default function StudyGuidePage() {
       {loading && (
         <div className="flex flex-col items-center justify-center py-16 gap-4">
           <Spinner size="lg" />
-          <p className="text-sm" style={{ color: '#4A4A4A' }}>Generating your study guide...</p>
+          <p className="text-sm text-gray-500">Generating your study guide...</p>
         </div>
       )}
 
@@ -82,10 +107,10 @@ export default function StudyGuidePage() {
       {guide && guide.error && (
         <Card className="p-6">
           <h3 className="text-lg font-bold text-red-500 mb-3">AI Response Formatting Issue</h3>
-          <p className="text-sm mb-4" style={{ color: '#4A4A4A' }}>
+          <p className="text-sm mb-4 text-[#4A4A4A]">
             The AI returned content, but we couldn't parse it into key concepts and terms automatically. You can read the raw response below:
           </p>
-          <div className="bg-gray-50 rounded-xl p-6 text-sm leading-relaxed" style={{ fontFamily: 'Georgia, Cambria, serif', whiteSpace: 'pre-wrap', color: '#1A1A1A' }}>
+          <div className="study-guide-content bg-white rounded-xl p-6 text-sm leading-relaxed border border-gray-150" style={{ whiteSpace: 'pre-wrap' }}>
             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
               {guide.raw_content}
             </ReactMarkdown>
@@ -94,93 +119,120 @@ export default function StudyGuidePage() {
       )}
 
       {guide && !guide.error && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold" style={{ color: '#1A1A1A' }}>
-            Study Guide: {guide.topic}
-          </h2>
+        <div className="space-y-6 animate-fade-in study-guide-content">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#EBE6DE] pb-4">
+            <h2 className="text-2xl font-extrabold text-[#2C2C2C]">
+              ## {guide.topic} - Study Guide
+            </h2>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate('/study-guides/history')}>
+                View Saved History
+              </Button>
+              <Button onClick={handleSave} disabled={saving} size="sm">
+                {saving ? 'Saving...' : 'Save Guide'}
+              </Button>
+            </div>
+          </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          {/* Estimated Study Time */}
+          <div className="flex items-center gap-2 text-sm text-gray-600 bg-[#EEF4F2] p-3 rounded-lg border border-[#B0C8C2]/40 w-fit">
+            <span className="font-bold">Estimated Study Time:</span>
+            <span>{guide.estimated_study_time || '30'} minutes</span>
+          </div>
+
+          <div className="grid gap-6">
             {/* Key Concepts */}
             {guide.key_concepts?.length > 0 && (
               <Card>
-                <h3 className="text-base font-semibold mb-4" style={{ color: '#F97316' }}>Key Concepts</h3>
-                <ul className="space-y-3">
+                <h3 className="text-lg font-bold mb-4 text-[#7A958E]">### Key Concepts</h3>
+                <ul className="space-y-4">
                   {guide.key_concepts.map((c, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <span className="mt-0.5 w-5 h-5 rounded-full bg-orange-100 text-orange-600 text-xs flex items-center justify-center flex-shrink-0 font-semibold">{i+1}</span>
-                      <span style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="mt-1 w-6 h-6 rounded-full bg-[#EEF4F2] text-[#7A958E] text-xs flex items-center justify-center flex-shrink-0 font-bold border border-[#B0C8C2]">{i+1}</span>
+                      <div className="flex-1 text-[#2C2C2C]">
                         <MarkdownText content={c} />
-                      </span>
+                      </div>
                     </li>
                   ))}
                 </ul>
               </Card>
             )}
 
-            {/* Important Terms */}
+            {/* Important Terms - Table format */}
             {guide.important_terms?.length > 0 && (
+              <Card className="overflow-x-auto">
+                <h3 className="text-lg font-bold mb-4 text-[#7A958E]">### Important Terms</h3>
+                <table className="min-w-full divide-y divide-gray-200 border border-[#EBE6DE] rounded-lg overflow-hidden">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-r border-[#EBE6DE]">Term</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Definition</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {guide.important_terms.map((t, i) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 border-r border-[#EBE6DE]">{t.term}</td>
+                        <td className="px-6 py-4 text-sm text-[#4A4A4A]"><MarkdownText content={t.definition} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            )}
+
+            {/* Practice Questions */}
+            {guide.practice_questions?.length > 0 && (
               <Card>
-                <h3 className="text-base font-semibold mb-4" style={{ color: '#F97316' }}>Important Terms</h3>
-                <div className="space-y-4">
-                  {guide.important_terms.map((t, i) => (
-                    <div key={i} className="border-b border-gray-100 pb-3 last:border-0">
-                      <p className="font-semibold text-sm mb-0.5" style={{ color: '#1A1A1A' }}>{t.term}</p>
-                      <p className="text-sm" style={{ color: '#4A4A4A', fontFamily: 'Georgia, Cambria, serif' }}>
-                        <MarkdownText content={t.definition} />
+                <h3 className="text-lg font-bold mb-4 text-[#7A958E]">### Practice Questions</h3>
+                <div className="space-y-5">
+                  {guide.practice_questions.map((q, i) => (
+                    <div key={i} className="border-b border-gray-150 pb-4 last:border-0">
+                      <p className="font-semibold text-base text-[#2C2C2C] mb-2">
+                        {i+1}. <MarkdownText content={q.question} />
                       </p>
+                      <details className="group">
+                        <summary className="text-xs text-[#5F8B8B] cursor-pointer hover:text-[#8DA9A0] select-none font-semibold">Show answer</summary>
+                        <div className="mt-2 p-3 rounded-lg text-sm bg-[#FBF4E6] text-gray-800 border border-[#E4C07A]/40">
+                          Answer: <MarkdownText content={q.answer} />
+                        </div>
+                      </details>
                     </div>
                   ))}
                 </div>
               </Card>
             )}
+
+            {/* Recommended Resources */}
+            {guide.recommended_resources?.length > 0 && (
+              <Card>
+                <h3 className="text-lg font-bold mb-4 text-[#7A958E]">### Recommended Resources</h3>
+                <ul className="space-y-2">
+                  {guide.recommended_resources.map((r, i) => (
+                    <li key={i} className="text-sm flex items-start gap-2">
+                      <span className="text-[#8DA9A0] mt-1">•</span>
+                      <span className="text-[#2C2C2C]"><MarkdownText content={r} /></span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
           </div>
-
-          {/* Practice Questions */}
-          {guide.practice_questions?.length > 0 && (
-            <Card>
-              <h3 className="text-base font-semibold mb-4" style={{ color: '#F97316' }}>Practice Questions</h3>
-              <div className="space-y-4">
-                {guide.practice_questions.map((q, i) => (
-                  <div key={i} className="border-b border-gray-100 pb-4 last:border-0">
-                    <p className="font-medium text-sm mb-2" style={{ color: '#1A1A1A' }}>
-                      {i+1}. <MarkdownText content={q.question} />
-                    </p>
-                    <details>
-                      <summary className="text-xs text-orange-500 cursor-pointer hover:text-orange-600 select-none font-medium">Show answer</summary>
-                      <div className="mt-2 p-3 rounded-lg text-sm leading-relaxed" style={{ background: '#FEF3C7', color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>
-                        <MarkdownText content={q.answer} />
-                      </div>
-                    </details>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* Recommended Resources */}
-          {guide.recommended_resources?.length > 0 && (
-            <Card>
-              <h3 className="text-base font-semibold mb-4" style={{ color: '#F97316' }}>Recommended Resources</h3>
-              <ul className="space-y-2">
-                {guide.recommended_resources.map((r, i) => (
-                  <li key={i} className="text-sm flex items-start gap-2">
-                    <span className="text-orange-400 mt-0.5">•</span>
-                    <span style={{ color: '#1A1A1A' }}><MarkdownText content={r} /></span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
         </div>
       )}
 
       {!guide && !loading && (
         <div className="text-center py-16">
-          <AutoStoriesIcon style={{ fontSize: 64, color: '#FACC15', marginBottom: 16 }} />
-          <h3 className="text-lg font-semibold mb-2" style={{ color: '#1A1A1A' }}>Ready to study?</h3>
-          <p className="text-sm" style={{ color: '#4A4A4A' }}>
-            Enter any topic above and get key concepts, important terms, 10 practice questions, and resource recommendations.
+          <AutoStoriesIcon style={{ fontSize: 64, color: '#D4A857', marginBottom: 16 }} />
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#2C2C2C' }}>Ready to study?</h3>
+          <p className="text-sm text-gray-500 max-w-sm mx-auto">
+            Enter any topic above and get key concepts, important terms, practice questions, and resource recommendations.
           </p>
+          <div className="mt-4">
+            <Button variant="outline" size="sm" onClick={() => navigate('/study-guides/history')}>
+              View Saved History
+            </Button>
+          </div>
         </div>
       )}
     </div>

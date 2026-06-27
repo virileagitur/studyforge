@@ -88,6 +88,25 @@ export default function TasksPage() {
     }
   };
 
+  const updateTaskStatus = async (task, newStatus) => {
+    const previousTasks = [...tasks];
+    setTasks(ts => ts.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+    try {
+      const payload = {
+        title: task.title,
+        description: task.description || '',
+        subject: task.subject || '',
+        due_date: task.due_date ? task.due_date.split('T')[0] : '',
+        priority: task.priority,
+        status: newStatus
+      };
+      await api.put(`/tasks/${task.id}`, payload);
+    } catch {
+      setError('Failed to update task status.');
+      setTasks(previousTasks);
+    }
+  };
+
   const setFilter = (key) => (e) => setFilters(f => ({ ...f, [key]: e.target.value }));
   const setF = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
 
@@ -107,7 +126,7 @@ export default function TasksPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center p-4 bg-white rounded-xl" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-        <FilterListIcon style={{ color: '#F97316' }} />
+        <FilterListIcon style={{ color: '#8DA9A0' }} />
         <Select value={filters.subject} onChange={setFilter('subject')} className="w-36">
           <option value="">All Subjects</option>
           {subjects.map(s => <option key={s} value={s}>{s}</option>)}
@@ -143,7 +162,7 @@ export default function TasksPage() {
       ) : (
         <div className="space-y-3">
           {tasks.map(task => (
-            <Card key={task.id} className={task.status === 'completed' ? 'opacity-60' : ''}>
+            <Card key={task.id} className={task.status === 'completed' ? 'opacity-70' : ''}>
               <div className="flex items-start gap-4">
                 <button
                   onClick={() => task.status !== 'completed' && handleComplete(task.id)}
@@ -154,14 +173,14 @@ export default function TasksPage() {
                 </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className={`font-semibold text-base ${task.status === 'completed' ? 'line-through' : ''}`} style={{ color: '#1A1A1A' }}>
+                    <h3 className={`font-semibold text-base ${task.status === 'completed' ? 'line-through opacity-80' : ''}`} style={{ color: '#2C2C2C' }}>
                       {task.title}
                     </h3>
                     <PriorityBadge priority={task.priority} />
                     <StatusBadge status={task.status} />
                   </div>
-                  {task.description && <p className="text-sm mb-2" style={{ color: '#4A4A4A' }}>{task.description}</p>}
-                  <div className="flex flex-wrap gap-3 text-xs" style={{ color: '#6B7280' }}>
+                  {task.description && <p className="text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>{task.description}</p>}
+                  <div className="flex flex-wrap gap-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                     {task.subject && <span>Subject: {task.subject}</span>}
                     {task.due_date && (
                       <span className={new Date(task.due_date) < new Date() && task.status !== 'completed' ? 'text-red-500 font-medium' : ''}>
@@ -169,9 +188,36 @@ export default function TasksPage() {
                       </span>
                     )}
                   </div>
+                  
+                  {/* Status Pill Selector */}
+                  <div className="flex items-center gap-2 mt-4 pt-2 border-t border-[#EBE6DE] flex-wrap">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mr-1">Status:</span>
+                    {STATUSES.map(s => {
+                      const isActive = task.status === s;
+                      const label = s.replace(/_/g, ' ');
+                      const activeStyles = {
+                        not_started: 'bg-gray-100 text-gray-700 border-gray-300 font-semibold',
+                        in_progress: 'bg-[#EEF4F2] text-[#7A958E] border-[#B0C8C2] font-semibold',
+                        completed: 'bg-[#FBF4E6] text-[#C49A47] border-[#E4C07A] font-semibold',
+                      };
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => updateTaskStatus(task, s)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                            isActive 
+                              ? activeStyles[s] 
+                              : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => openEdit(task)} className="p-2 rounded-lg hover:bg-orange-50 text-gray-400 hover:text-orange-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+                  <button onClick={() => openEdit(task)} className="p-2 rounded-lg hover:bg-[#EEF4F2] text-gray-400 hover:text-[#8DA9A0] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
                     <EditIcon fontSize="small" />
                   </button>
                   <button onClick={() => handleDelete(task.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">

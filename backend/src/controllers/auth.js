@@ -271,4 +271,68 @@ const googleLogin = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, logout, me, updateProfile, googleLogin };
+const onboarding = async (req, res, next) => {
+  try {
+    const { fullName, schoolLevel, subjects, studyHoursPerDay, preferredStudyTime, emailReminders, mainGoal } = req.body;
+    
+    const result = await query(
+      `UPDATE users 
+       SET full_name=$1, school_level=$2, subjects=$3, study_hours_per_day=$4, preferred_study_time=$5, email_reminders=$6, main_goal=$7, onboarding_completed=TRUE, onboarding_completed_at=NOW()
+       WHERE id=$8
+       RETURNING id, name, email, role, school, grade_level, subjects, profile_image, full_name, school_level, study_hours_per_day, preferred_study_time, email_reminders, main_goal, onboarding_completed, created_at`,
+      [
+        fullName || null, 
+        schoolLevel || null, 
+        subjects || [], 
+        studyHoursPerDay ? parseInt(studyHoursPerDay) : null, 
+        preferredStudyTime || null, 
+        emailReminders !== undefined ? emailReminders : true, 
+        mainGoal || null, 
+        req.user.id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    res.json({ user: result.rows[0], message: 'Onboarding completed successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteAccount = async (req, res, next) => {
+  try {
+    const { password, confirm } = req.body;
+
+    if (!confirm || confirm.trim().toLowerCase() !== 'delete my account') {
+      return res.status(400).json({ error: 'Please type "delete my account" to confirm.' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required to delete your account.' });
+    }
+
+    const userResult = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const user = userResult.rows[0];
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Incorrect password.' });
+    }
+
+    // Delete user (cascade deletes all related data)
+    await query('DELETE FROM users WHERE id = $1', [req.user.id]);
+
+    res.clearCookie('token', COOKIE_OPTIONS);
+    res.json({ message: 'Account deleted successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { register, login, logout, me, updateProfile, googleLogin, onboarding, deleteAccount };

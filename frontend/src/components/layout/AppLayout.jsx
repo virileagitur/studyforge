@@ -37,8 +37,8 @@ const mobileNavItems = [
 ];
 
 const linkBase = 'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 min-h-[44px]';
-const activeClass = 'bg-orange-50 text-orange-600 font-semibold';
-const inactiveClass = 'text-gray-600 hover:bg-orange-50 hover:text-orange-500';
+const activeClass = 'bg-[#EEF4F2] text-[#7A958E] font-semibold';
+const inactiveClass = 'text-gray-600 hover:bg-[#EEF4F2] hover:text-[#8DA9A0]';
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
@@ -54,25 +54,29 @@ export default function AppLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-orange-100">
-        <h1 className="text-xl font-bold" style={{ color: '#F97316' }}>StudyForge</h1>
+      <div className="px-6 py-5 border-b border-[#EBE6DE]">
+        <h1 className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
         <p className="text-xs text-gray-500 mt-0.5">Academic Co-pilot</p>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ to, label, icon: Icon, exact }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={exact}
-            onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) => `${linkBase} ${isActive ? activeClass : inactiveClass}`}
-          >
-            <Icon fontSize="small" />
-            <span>{label}</span>
-          </NavLink>
-        ))}
+        {navItems.map(({ to, label, icon: Icon, exact }) => {
+          // If navigation is dashboard, direct to /:name/dashboard dynamically
+          const targetTo = to === '/' && user ? `/${encodeURIComponent(user.name?.toLowerCase().replace(/\s+/g, '-'))}/dashboard` : to;
+          return (
+            <NavLink
+              key={to}
+              to={targetTo}
+              end={exact}
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) => `${linkBase} ${isActive ? activeClass : inactiveClass}`}
+            >
+              <Icon fontSize="small" />
+              <span>{label}</span>
+            </NavLink>
+          );
+        })}
         {isAdmin && (
           <NavLink
             to="/admin"
@@ -86,7 +90,7 @@ export default function AppLayout() {
       </nav>
 
       {/* User + Logout */}
-      <div className="px-3 py-4 border-t border-orange-100">
+      <div className="px-3 py-4 border-t border-[#EBE6DE]">
         <NavLink
           to="/profile"
           onClick={() => setSidebarOpen(false)}
@@ -99,8 +103,8 @@ export default function AppLayout() {
               className="w-8 h-8 rounded-full object-cover flex-shrink-0"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-orange-600 font-bold text-sm">
+            <div className="w-8 h-8 rounded-full bg-[#EEF4F2] flex items-center justify-center flex-shrink-0">
+              <span className="text-[#8DA9A0] font-bold text-sm">
                 {user?.name?.charAt(0)?.toUpperCase() || '?'}
               </span>
             </div>
@@ -122,7 +126,7 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#FFFDF7' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--color-background)' }}>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 bg-white" style={{ boxShadow: '2px 0 8px rgba(0,0,0,0.04)' }}>
         <SidebarContent />
@@ -133,8 +137,8 @@ export default function AppLayout() {
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/30" onClick={() => setSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col" style={{ boxShadow: '4px 0 16px rgba(0,0,0,0.1)' }}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-orange-100">
-              <h1 className="text-lg font-bold" style={{ color: '#F97316' }}>StudyForge</h1>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#EBE6DE]">
+              <h1 className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
               <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
                 <CloseIcon />
               </button>
@@ -153,17 +157,17 @@ export default function AppLayout() {
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <MenuIcon />
           </button>
-          <h1 className="text-lg font-bold flex-1" style={{ color: '#F97316' }}>StudyForge</h1>
+          <h1 className="text-lg font-bold flex-1" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
           <NavLink to="/profile">
             {user?.profile_image ? (
               <img
                 src={user.profile_image}
                 alt={user?.name}
-                className="w-9 h-9 rounded-full object-cover border-2 border-orange-100"
+                className="w-9 h-9 rounded-full object-cover border-2 border-[#EEF4F2]"
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center">
-                <span className="text-orange-600 font-bold text-sm">
+              <div className="w-9 h-9 rounded-full bg-[#EEF4F2] flex items-center justify-center">
+                <span className="text-[#8DA9A0] font-bold text-sm">
                   {user?.name?.charAt(0)?.toUpperCase() || '?'}
                 </span>
               </div>
@@ -180,19 +184,22 @@ export default function AppLayout() {
 
         {/* Mobile Bottom Nav */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex z-40" style={{ boxShadow: '0 -2px 8px rgba(0,0,0,0.06)' }}>
-          {mobileNavItems.map(({ to, label, icon: Icon, exact }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={exact}
-              className={({ isActive }) =>
-                `flex-1 flex flex-col items-center justify-center py-2 gap-0.5 min-h-[56px] text-xs font-medium transition-colors ${isActive ? 'text-orange-500' : 'text-gray-500'}`
-              }
-            >
-              <Icon fontSize="small" />
-              <span>{label}</span>
-            </NavLink>
-          ))}
+          {mobileNavItems.map(({ to, label, icon: Icon, exact }) => {
+            const targetTo = to === '/' && user ? `/${encodeURIComponent(user.name?.toLowerCase().replace(/\s+/g, '-'))}/dashboard` : to;
+            return (
+              <NavLink
+                key={to}
+                to={targetTo}
+                end={exact}
+                className={({ isActive }) =>
+                  `flex-1 flex flex-col items-center justify-center py-2 gap-0.5 min-h-[56px] text-xs font-medium transition-colors ${isActive ? 'text-[#8DA9A0]' : 'text-gray-500'}`
+                }
+              >
+                <Icon fontSize="small" />
+                <span>{label}</span>
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
     </div>

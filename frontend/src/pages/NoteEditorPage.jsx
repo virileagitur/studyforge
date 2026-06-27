@@ -15,6 +15,8 @@ import FormatClearIcon from '@mui/icons-material/FormatClear';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import ImageIcon from '@mui/icons-material/Image';
 
+import EditIcon from '@mui/icons-material/Edit';
+
 export default function NoteEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -29,12 +31,12 @@ export default function NoteEditorPage() {
   const [summary, setSummary] = useState('');
   const [quiz, setQuiz] = useState(null);
   const [aiLoading, setAiLoading] = useState('');
+  const [isEditing, setIsEditing] = useState(false); // default: review mode (read-only)
   const saveTimer = useRef(null);
 
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     api.get(`/notes/${id}`)
@@ -46,24 +48,17 @@ export default function NoteEditorPage() {
         setSubject(n.subject || '');
         if (n.ai_summary) setSummary(n.ai_summary);
         if (n.ai_quiz) setQuiz(n.ai_quiz);
-
-        // Initialize editor content once
-        if (editorRef.current && !isInitialized) {
-          editorRef.current.innerHTML = n.content || '';
-          setIsInitialized(true);
-        }
       })
       .catch(() => setError('Note not found.'))
       .finally(() => setLoading(false));
-  }, [id, isInitialized]);
+  }, [id]);
 
-  // Synchronize content editable ref if the note changes (e.g. initial load)
+  // Sync editor content when toggling to edit mode
   useEffect(() => {
-    if (editorRef.current && note && !isInitialized) {
-      editorRef.current.innerHTML = note.content || '';
-      setIsInitialized(true);
+    if (isEditing && editorRef.current) {
+      editorRef.current.innerHTML = content || '';
     }
-  }, [note, isInitialized]);
+  }, [isEditing]);
 
   const handleEditorInput = () => {
     if (!editorRef.current) return;
@@ -86,6 +81,7 @@ export default function NoteEditorPage() {
       await api.put(`/notes/${id}`, { title, content, subject });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      setIsEditing(false); // return to read-only mode after explicit save
     } catch { setError('Failed to save note.'); }
     finally { setSaving(false); }
   };
@@ -248,38 +244,68 @@ export default function NoteEditorPage() {
     <div className="max-w-4xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
-        <button onClick={() => navigate('/notes')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-orange-500 transition-colors min-h-[44px] px-2">
+        <button onClick={() => navigate('/notes')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-[#8DA9A0] transition-colors min-h-[44px] px-2 font-medium">
           <ArrowBackIcon fontSize="small" />
           <span>Back to Notes</span>
         </button>
         <div className="flex items-center gap-2">
-          {saved && <span className="text-xs text-green-600">Saved</span>}
-          <Button onClick={handleSave} disabled={saving} icon={SaveIcon} size="sm">
-            {saving ? 'Saving...' : 'Save'}
-          </Button>
+          {saved && <span className="text-xs text-green-600 font-semibold mr-2">Auto-saved</span>}
+          {isEditing ? (
+            <div className="flex gap-2">
+              <Button onClick={() => {
+                // Cancel: revert inputs and exit edit mode
+                setTitle(note?.title || '');
+                setContent(note?.content || '');
+                setSubject(note?.subject || '');
+                setIsEditing(false);
+              }} variant="ghost" size="sm">
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={saving} icon={SaveIcon} size="sm">
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={() => setIsEditing(true)} icon={EditIcon} size="sm">
+              Edit Note
+            </Button>
+          )}
         </div>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       {/* Title & Subject */}
-      <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-        <input
-          className="w-full text-2xl font-bold focus:outline-none bg-transparent mb-2"
-          style={{ color: '#1A1A1A' }}
-          placeholder="Note title..."
-          value={title}
-          onChange={e => { setTitle(e.target.value); setSaved(false); }}
-          onBlur={handleSave}
-        />
-        <input
-          className="w-full text-sm focus:outline-none bg-transparent"
-          style={{ color: '#6B7280' }}
-          placeholder="Subject (optional)..."
-          value={subject}
-          onChange={e => { setSubject(e.target.value); setSaved(false); }}
-          onBlur={handleSave}
-        />
+      <div className="bg-white rounded-xl p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
+        {isEditing ? (
+          <>
+            <input
+              className="w-full text-2xl font-bold focus:outline-none bg-transparent mb-2 border-b border-gray-100 pb-1"
+              style={{ color: 'var(--color-text)' }}
+              placeholder="Note title..."
+              value={title}
+              onChange={e => { setTitle(e.target.value); setSaved(false); }}
+            />
+            <input
+              className="w-full text-sm focus:outline-none bg-transparent"
+              style={{ color: 'var(--color-text-secondary)' }}
+              placeholder="Subject (optional)..."
+              value={subject}
+              onChange={e => { setSubject(e.target.value); setSaved(false); }}
+            />
+          </>
+        ) : (
+          <div>
+            <h1 className="text-2xl font-extrabold text-[#2C2C2C] mb-1">{title}</h1>
+            {subject ? (
+              <span className="inline-block bg-[#EEF4F2] text-[#7A958E] text-xs font-semibold px-2.5 py-1 rounded-full border border-[#B0C8C2]">
+                {subject}
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400 italic">No subject</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* AI Actions */}
@@ -293,64 +319,80 @@ export default function NoteEditorPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
-        {/* Main editor */}
+        {/* Main editor/viewer container */}
         <div className="lg:col-span-2 space-y-2">
-          {/* Formatting Toolbar */}
-          <div className="bg-white rounded-xl p-2 flex flex-wrap gap-1 items-center" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-            <button type="button" onClick={() => executeCommand('bold')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors" title="Bold"><FormatBoldIcon fontSize="small" /></button>
-            <button type="button" onClick={() => executeCommand('italic')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors" title="Italic"><FormatItalicIcon fontSize="small" /></button>
-            <button type="button" onClick={() => executeCommand('underline')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors" title="Underline"><FormatUnderlinedIcon fontSize="small" /></button>
-            <div className="w-px h-6 bg-gray-200 mx-1" />
-            <button type="button" onClick={() => executeCommand('insertUnorderedList')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors" title="Bullet List"><FormatListBulletedIcon fontSize="small" /></button>
-            <button type="button" onClick={() => executeCommand('insertOrderedList')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors" title="Numbered List"><FormatListNumberedIcon fontSize="small" /></button>
-            <button type="button" onClick={() => executeCommand('formatBlock', '<h3>')} className="p-1.5 px-2 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors font-bold text-xs min-h-[32px] flex items-center justify-center" title="Heading 3">H3</button>
-            <button type="button" onClick={() => executeCommand('removeFormat')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors" title="Clear Formatting"><FormatClearIcon fontSize="small" /></button>
-            <div className="w-px h-6 bg-gray-200 mx-1" />
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors flex items-center gap-1 text-xs font-medium min-h-[32px]" title="Import TXT/PDF"><UploadFileIcon fontSize="small" /><span>Import File</span></button>
-            <button type="button" onClick={() => imageInputRef.current?.click()} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-orange-500 transition-colors flex items-center gap-1 text-xs font-medium min-h-[32px]" title="Insert Image"><ImageIcon fontSize="small" /><span>Insert Image</span></button>
-            <input type="file" ref={fileInputRef} accept=".txt,.pdf" className="hidden" onChange={handleFileUpload} />
-            <input type="file" ref={imageInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
-          </div>
+          {isEditing ? (
+            <>
+              {/* Formatting Toolbar */}
+              <div className="bg-white rounded-xl p-2 flex flex-wrap gap-1 items-center" style={{ boxShadow: 'var(--shadow-card)' }}>
+                <button type="button" onClick={() => executeCommand('bold')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#8DA9A0] transition-colors" title="Bold"><FormatBoldIcon fontSize="small" /></button>
+                <button type="button" onClick={() => executeCommand('italic')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#8DA9A0] transition-colors" title="Italic"><FormatItalicIcon fontSize="small" /></button>
+                <button type="button" onClick={() => executeCommand('underline')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#8DA9A0] transition-colors" title="Underline"><FormatUnderlinedIcon fontSize="small" /></button>
+                <div className="w-px h-6 bg-gray-200 mx-1" />
+                <button type="button" onClick={() => executeCommand('insertUnorderedList')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#8DA9A0] transition-colors" title="Bullet List"><FormatListBulletedIcon fontSize="small" /></button>
+                <button type="button" onClick={() => executeCommand('insertOrderedList')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#8DA9A0] transition-colors" title="Numbered List"><FormatListNumberedIcon fontSize="small" /></button>
+                <button type="button" onClick={() => executeCommand('formatBlock', '<h3>')} className="p-1.5 px-2 rounded hover:bg-gray-100 text-gray-600 hover:text-[#8DA9A0] transition-colors font-bold text-xs min-h-[32px] flex items-center justify-center" title="Heading 3">H3</button>
+                <button type="button" onClick={() => executeCommand('removeFormat')} className="p-1.5 rounded hover:bg-gray-150 text-gray-600 hover:text-[#8DA9A0] transition-colors" title="Clear Formatting"><FormatClearIcon fontSize="small" /></button>
+                <div className="w-px h-6 bg-gray-200 mx-1" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#8DA9A0] transition-colors flex items-center gap-1 text-xs font-medium min-h-[32px]" title="Import TXT/PDF"><UploadFileIcon fontSize="small" /><span>Import File</span></button>
+                <button type="button" onClick={() => imageInputRef.current?.click()} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#8DA9A0] transition-colors flex items-center gap-1 text-xs font-medium min-h-[32px]" title="Insert Image"><ImageIcon fontSize="small" /><span>Insert Image</span></button>
+                <input type="file" ref={fileInputRef} accept=".txt,.pdf" className="hidden" onChange={handleFileUpload} />
+                <input type="file" ref={imageInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
+              </div>
 
-          <div
-            ref={editorRef}
-            contentEditable
-            suppressContentEditableWarning
-            onInput={handleEditorInput}
-            className="w-full bg-white rounded-xl p-6 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none overflow-y-auto"
-            style={{
-              minHeight: '500px',
-              maxHeight: '700px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-              color: '#1A1A1A',
-              fontFamily: "'Nunito', Verdana, Arial, sans-serif",
-              fontSize: '1.1rem',
-              lineHeight: '1.85',
-              letterSpacing: '0.01em',
-            }}
-            placeholder="Start writing your notes here..."
-          />
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={handleEditorInput}
+                className="w-full bg-white rounded-xl p-6 focus:outline-none focus:ring-2 focus:ring-[#8DA9A0]/40 resize-none overflow-y-auto"
+                style={{
+                  minHeight: '500px',
+                  maxHeight: '700px',
+                  boxShadow: 'var(--shadow-card)',
+                  color: 'var(--color-text)',
+                  fontFamily: "'Nunito', sans-serif",
+                  fontSize: '1.1rem',
+                  lineHeight: '1.85',
+                }}
+                placeholder="Start writing your notes here..."
+              />
+            </>
+          ) : (
+            <div
+              className="note-content w-full bg-white rounded-xl p-8 overflow-y-auto leading-relaxed"
+              style={{
+                minHeight: '500px',
+                maxHeight: '700px',
+                boxShadow: 'var(--shadow-card)',
+                color: 'var(--color-text)',
+              }}
+              dangerouslySetInnerHTML={{
+                __html: content || '<p class="text-gray-400 italic">No content in this note yet. Click Edit Note to start writing.</p>'
+              }}
+            />
+          )}
         </div>
 
         {/* Side panel */}
         <div className="space-y-4">
           {summary && (
-            <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-              <p className="text-sm font-semibold mb-2" style={{ color: '#F97316' }}>AI Summary</p>
-              <p className="text-sm animate-fade-in" style={{ color: '#1A1A1A', whiteSpace: 'pre-wrap' }}>{summary}</p>
+            <div className="bg-white rounded-xl p-5 border border-[#EBE6DE]" style={{ boxShadow: 'var(--shadow-card)' }}>
+              <p className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--color-primary-dark)' }}>AI Summary</p>
+              <p className="text-sm leading-relaxed animate-fade-in" style={{ color: 'var(--color-text)', whiteSpace: 'pre-wrap' }}>{summary}</p>
             </div>
           )}
 
           {quiz && quiz.length > 0 && (
-            <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-              <p className="text-sm font-semibold mb-3" style={{ color: '#F97316' }}>AI Quiz</p>
+            <div className="bg-white rounded-xl p-5 border border-[#EBE6DE]" style={{ boxShadow: 'var(--shadow-card)' }}>
+              <p className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: 'var(--color-primary-dark)' }}>AI Quiz</p>
               <div className="space-y-4">
                 {quiz.map((q, i) => (
                   <div key={i} className="border-b border-gray-100 pb-3 last:border-0">
-                    <p className="text-sm font-medium mb-1" style={{ color: '#1A1A1A' }}>{i + 1}. {q.question}</p>
+                    <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text)' }}>{i + 1}. {q.question}</p>
                     <details className="group">
-                      <summary className="text-xs text-orange-500 cursor-pointer hover:text-orange-600 select-none">Show answer</summary>
-                      <p className="text-xs mt-1 p-2 rounded" style={{ color: '#4A4A4A', background: '#FEF3C7' }}>{q.answer}</p>
+                      <summary className="text-xs font-semibold cursor-pointer select-none text-[#5F8B8B] hover:text-[#8DA9A0]">Show answer</summary>
+                      <p className="text-sm mt-2 p-3 rounded-lg leading-relaxed bg-[#FBF4E6] text-gray-800 border border-[#E4C07A]/40">{q.answer}</p>
                     </details>
                   </div>
                 ))}
@@ -359,8 +401,8 @@ export default function NoteEditorPage() {
           )}
 
           {!summary && !quiz && (
-            <div className="bg-white rounded-xl p-4 text-center" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-              <p className="text-sm" style={{ color: '#6B7280' }}>Use the AI tools above to generate a summary or quiz from your notes.</p>
+            <div className="bg-white rounded-xl p-5 text-center border border-[#EBE6DE]" style={{ boxShadow: 'var(--shadow-card)' }}>
+              <p className="text-sm text-gray-400">Use the AI tools above to generate a summary or quiz from your notes.</p>
             </div>
           )}
         </div>
