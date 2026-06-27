@@ -77,7 +77,7 @@ export default function OnboardingPage() {
         {/* Logo */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3" style={{ background: '#EEF4F2' }}>
-            <img src="/favicon.svg" alt="StudyForge Logo" className="w-7 h-7" />
+            <AutoStoriesIcon style={{ color: '#8DA9A0', fontSize: 28 }} />
           </div>
           <h1 className="text-xl font-bold text-[#2C2C2C]">StudyForge Setup</h1>
         </div>

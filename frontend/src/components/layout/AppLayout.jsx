@@ -54,8 +54,8 @@ export default function AppLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-[#EBE6DE] flex items-center gap-2.5">
-        <img src="/favicon.svg" alt="StudyForge Logo" className="w-6 h-6 flex-shrink-0" />
+      <div className="px-6 py-5 border-b border-[#EBE6DE] flex items-center gap-2">
+        <AutoStoriesIcon style={{ color: 'var(--color-primary)' }} />
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
           <p className="text-xs text-gray-500 mt-0.5">Academic Co-pilot</p>
@@ -142,7 +142,7 @@ export default function AppLayout() {
           <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col" style={{ boxShadow: '4px 0 16px rgba(0,0,0,0.1)' }}>
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#EBE6DE]">
               <div className="flex items-center gap-2">
-                <img src="/favicon.svg" alt="StudyForge Logo" className="w-5 h-5 flex-shrink-0" />
+                <AutoStoriesIcon style={{ color: 'var(--color-primary)' }} />
                 <h1 className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
               </div>
               <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
@@ -164,7 +164,7 @@ export default function AppLayout() {
             <MenuIcon />
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <img src="/favicon.svg" alt="StudyForge Logo" className="w-5 h-5 flex-shrink-0" />
+            <AutoStoriesIcon style={{ color: 'var(--color-primary)' }} />
             <h1 className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>StudyForge</h1>
           </div>
           <NavLink to="/profile">
