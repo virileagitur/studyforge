@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Design Tokens (CSS Variables) ===== */
+:root {
+  /* Light Mode */
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #F1F5F9;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
+  --color-accent: #6366F1;
+  --color-accent-hover: #4F46E5;
+  --color-error: #EF4444;
+  --color-success: #10B981;
+  --color-border: #E2E8F0;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.11);
+  --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.14);
+}
+
+.dark {
+  /* Dark Mode */
+  --color-background: #0B0F19;
+  --color-surface: #151B2B;
+  --color-surface-raised: #1E293B;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-accent: #6366F1;
+  --color-accent-hover: #4F46E5;
+  --color-error: #EF4444;
+  --color-success: #10B981;
+  --color-border: #334155;
+
+  /* Shadows (can stay same or adjust) */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', 'Open Sans', Verdana, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1.125rem; }
+h6 { font-size: 1rem; }
+
+p, span, li, label, button, input, textarea, select {
+  font-family: 'Inter', 'Open Sans', Verdana, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Serif content */
+.ai-response,
+.flashcard-content,
+.note-content,
+.study-guide-content,
+.book-summary-content {
+  font-family: 'Merriweather', 'Lora', Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+}
+
+.ai-response p,
+.flashcard-content p,
+.note-content p,
+.study-guide-content p,
+.book-summary-content p {
+  font-family: 'Merriweather', 'Lora', Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.85;
+  margin-bottom: 0.75rem;
+}
+
+/* Helper text */
+.metadata,
+.timestamp,
+.helper-text,
+.small-text {
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-background); }
+::-webkit-scrollbar-thumb { background: var(--color-text-muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-secondary); }
+
+/* Cards */
+.card {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--color-accent);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  min-height: 44px;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary:hover { background-color: var(--color-accent-hover); }
+
+/* Note: We'll keep the secondary button for now, but we can update later if needed */
+.btn-secondary {
+  background-color: var(--color-text-secondary); /* Using text-secondary as a secondary bg for now */
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  min-height: 44px;
+  transition: background-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-text-muted);
+}
+
+/* Form Inputs */
+input, select, textarea {
+  font-family: 'Inter', 'Open Sans', Verdana, sans-serif;
+  font-size: 1rem;
+}
+
+/* Focus Styles */
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  offset: 2px;
+}
+
+/* Transitions */
+.transition-default { transition: all 0.15s ease; }

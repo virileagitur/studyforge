@@ -1,0 +1,236 @@
+import React, { useState, useEffect, useRef } from 'react';
+import api from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import { Button, Input, Spinner, Alert, Select } from '../components/ui';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import SendIcon from '@mui/icons-material/Send';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonIcon from '@mui/icons-material/Person';
+import { formatDistanceToNow } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+
+export default function TutorPage() {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState([]);
+  const [activeConv, setActiveConv] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [subject, setSubject] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    api.get('/ai/tutor/conversations')
+      .then(res => setConversations(res.data.conversations))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, sending]);
+
+  const loadConversation = async (conv) => {
+    setActiveConv(conv);
+    try {
+      const res = await api.get(`/ai/tutor/conversations/${conv.id}`);
+      setMessages(res.data.conversation.messages || []);
+    } catch { setError('Failed to load conversation.'); }
+  };
+
+  const handleSend = async (e) => {
+    e?.preventDefault();
+    if (!input.trim() || sending) return;
+    const msg = input.trim();
+    setInput('');
+    setSending(true);
+
+    // Optimistically add user message
+    const userMsg = { role: 'user', content: msg, timestamp: new Date().toISOString() };
+    setMessages(ms => [...ms, userMsg]);
+
+    try {
+      const res = await api.post('/ai/tutor/chat', {
+        message: msg,
+        conversation_id: activeConv?.id,
+        subject: subject || undefined,
+      });
+      setMessages(res.data.conversation.messages);
+      const conv = res.data.conversation;
+      setActiveConv(conv);
+      setConversations(cs => {
+        const exists = cs.find(c => c.id === conv.id);
+        if (exists) return cs.map(c => c.id === conv.id ? { ...c, ...conv } : c);
+        return [conv, ...cs];
+      });
+    } catch (err) {
+      setError('Message failed to send. Please try again.');
+      setMessages(ms => ms.slice(0, -1));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleNewChat = () => {
+    setActiveConv(null);
+    setMessages([]);
+    setInput('');
+  };
+
+  const handleDeleteConv = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await api.delete(`/ai/tutor/conversations/${id}`);
+      setConversations(cs => cs.filter(c => c.id !== id));
+      if (activeConv?.id === id) { setActiveConv(null); setMessages([]); }
+    } catch { setError('Failed to delete conversation.'); }
+  };
+
+  return (
+    <div className="flex gap-4 h-[calc(100vh-180px)] lg:h-[calc(100vh-120px)]">
+      {/* Sidebar: conversation history */}
+      <div className="hidden lg:flex flex-col w-64 bg-[var(--color-surface)] rounded-xl overflow-hidden flex-shrink-0">
+        <div className="p-4 border-b border-[var(--color-border)]">
+          <Button onClick={handleNewChat} icon={AddIcon} size="sm" className="w-full">New Conversation</Button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {conversations.map(conv => (
+            <div
+              key={conv.id}
+              onClick={() => loadConversation(conv)}
+              className={`flex items-center gap-2 p-3 rounded-lg cursor-pointer text-sm transition-colors ${activeConv?.id === conv.id ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]' : 'hover:bg-[var(--color-background)] text-[var(--color-text-primary)]'}`}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate">{conv.session_name}</p>
+                <p className="text-xs text-[var(--color-text-muted)] truncate">{formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}</p>
+              </div>
+              <button onClick={(e) => handleDeleteConv(conv.id, e)} className="p-1 rounded hover:bg-[var(--color-error)]/10 text-[var(--color-error)] hover:text-[var(--color-error)] flex-shrink-0">
+                <DeleteIcon sx={{ fontSize: 14 }} />
+              </button>
+            </div>
+          ))}
+          {conversations.length === 0 && !loading && (
+            <p className="text-xs text-[var(--color-text-muted)] text-center py-4">No conversations yet</p>
+          )}
+        </div>
+      </div>
+
+      {/* Main chat */}
+      <div className="flex-1 flex flex-col bg-[var(--color-surface)] rounded-xl overflow-hidden">
+        {/* Chat header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
+          <div className="flex items-center gap-2">
+            <SmartToyIcon style={{ color: 'var(--color-accent)' }} />
+            <h3 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>AI Tutor</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={subject} onChange={e => setSubject(e.target.value)} className="w-36">
+              <option value="">Any subject</option>
+              {['Math', 'Science', 'English', 'History', 'Biology', 'Chemistry', 'Physics', 'Programming'].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </Select>
+            <Button variant="ghost" size="sm" onClick={handleNewChat} icon={AddIcon}>New Chat</Button>
+          </div>
+        </div>
+
+        {error && <div className="px-4 pt-2"><Alert type="error" message={error} onClose={() => setError('')} /></div>}
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <SmartToyIcon style={{ fontSize: 56, color: 'var(--color-accent)', marginBottom: 12 }} />
+              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>Your AI Tutor</h3>
+              <p className="text-sm max-w-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                Ask me anything — homework help, concept explanations, essay feedback, or step-by-step math solutions.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2 justify-center">
+                {['Explain photosynthesis', 'Help with quadratic equations', 'Outline an essay about climate change', 'What is the French Revolution?'].map(q => (
+                  <button key={q} onClick={() => { setInput(q); }} className="text-sm px-3 py-2 rounded-lg border border-[var(--color-accent)]/20 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 transition-colors">
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${msg.role === 'user' ? 'bg-[var(--color-accent)]/20' : 'bg-[var(--color-accent)]/20`}>
+                {msg.role === 'user' ? (
+                  user?.profile_image ? (
+                    <img src={user.profile_image} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                  ) : (
+                    <PersonIcon sx={{ fontSize: 18, color: 'var(--color-accent)' }} />
+                  )
+                ) : (
+                  <SmartToyIcon sx={{ fontSize: 18, color: 'var(--color-accent)' }} />
+                )}
+              </div>
+              <div className={`max-w-[80%] px-4 py-3 rounded-xl leading-relaxed ${msg.role === 'user' ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-background)] text-[var(--color-text-primary)]`} style={msg.role === 'user' ? { whiteSpace: 'pre-wrap' } : { fontFamily: 'Georgia, Cambria, "Times New Roman", Times, serif', fontSize: '1.05rem' }}>
+                {msg.role === 'user' ? (
+                  msg.content
+                ) : (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                      p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2" {...props} />,
+                      li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                      h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2" {...props} />,
+                      h2: ({node, ...props}) => <h2 className="text-base font-bold mb-2" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-sm font-bold mb-1" {...props} />,
+                      code: ({node, inline, ...props}) => inline
+                        ? <code className="bg-[var(--color-background)] px-1 py-0.5 rounded text-xs" {...props} />
+                        : <pre className="bg-[var(--color-background)] p-2 rounded text-xs overflow-x-auto my-2"><code {...props} /></pre>
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {sending && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-[var(--color-accent)]/20 flex items-center justify-center">
+                <SmartToyIcon sx={{ fontSize: 18, color: 'var(--color-accent)' }} />
+              </div>
+              <div className="px-4 py-3 rounded-xl bg-[var(--color-background)]">
+                <div className="flex gap-1">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="w-2 h-2 bg-[var(--color-text-muted)] rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Input */}
+        <form onSubmit={handleSend} className="border-t border-[var(--color-border)] p-4 flex gap-3">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Ask your tutor anything..."
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-[var(--color-background)] min-h-[44px]"
+            style={{ color: 'var(--color-text-primary)' }}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }}}
+          />
+          <Button type="submit" disabled={sending || !input.trim()} icon={SendIcon}>Send</Button>
+        </form>
+      </div>
+    </div>
+  );
+}
