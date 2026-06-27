@@ -30,6 +30,9 @@ export default function StudyGuidePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
   const handleGenerate = async (e) => {
     e.preventDefault();
     if (!topic.trim()) return setError('Please enter a topic.');
@@ -45,9 +48,6 @@ export default function StudyGuidePage() {
       setLoading(false);
     }
   };
-
-  const [saving, setSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSave = async () => {
     if (!guide) return;
@@ -99,18 +99,18 @@ export default function StudyGuidePage() {
       {loading && (
         <div className="flex flex-col items-center justify-center py-16 gap-4">
           <Spinner size="lg" />
-          <p className="text-sm text-gray-500">Generating your study guide...</p>
+          <p className="text-sm text-[var(--color-text-muted)]">Generating your study guide...</p>
         </div>
       )}
 
       {/* Fallback for unparseable raw responses */}
       {guide && guide.error && (
         <Card className="p-6">
-          <h3 className="text-lg font-bold text-red-500 mb-3">AI Response Formatting Issue</h3>
-          <p className="text-sm mb-4 text-[#4A4A4A]">
+          <h3 className="text-lg font-bold text-[var(--color-error)] mb-3">AI Response Formatting Issue</h3>
+          <p className="text-sm text-[var(--color-text-muted)] mb-4">
             The AI returned content, but we couldn't parse it into key concepts and terms automatically. You can read the raw response below:
           </p>
-          <div className="study-guide-content bg-white rounded-xl p-6 text-sm leading-relaxed border border-gray-150" style={{ whiteSpace: 'pre-wrap' }}>
+          <div className="study-guide-content bg-[var(--color-surface)] rounded-xl p-6 text-sm leading-relaxed border border-[var(--color-border)]" style={{ whiteSpace: 'pre-wrap' }}>
             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
               {guide.raw_content}
             </ReactMarkdown>
@@ -120,8 +120,8 @@ export default function StudyGuidePage() {
 
       {guide && !guide.error && (
         <div className="space-y-6 animate-fade-in study-guide-content">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#EBE6DE] pb-4">
-            <h2 className="text-2xl font-extrabold text-[#2C2C2C]">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-4">
+            <h2 className="text-2xl font-extrabold text-[var(--color-text-primary)]">
               ## {guide.topic} - Study Guide
             </h2>
             <div className="flex gap-2">
@@ -135,7 +135,7 @@ export default function StudyGuidePage() {
           </div>
 
           {/* Estimated Study Time */}
-          <div className="flex items-center gap-2 text-sm text-gray-600 bg-[#EEF4F2] p-3 rounded-lg border border-[#B0C8C2]/40 w-fit">
+          <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)] bg-[var(--color-surface)] p-3 rounded-lg border border-[var(--color-border)] w-fit">
             <span className="font-bold">Estimated Study Time:</span>
             <span>{guide.estimated_study_time || '30'} minutes</span>
           </div>
@@ -144,12 +144,12 @@ export default function StudyGuidePage() {
             {/* Key Concepts */}
             {guide.key_concepts?.length > 0 && (
               <Card>
-                <h3 className="text-lg font-bold mb-4 text-[#7A958E]">### Key Concepts</h3>
+                <h3 className="text-lg font-bold mb-4 text-[var(--color-success)]">Key Concepts</h3>
                 <ul className="space-y-4">
                   {guide.key_concepts.map((c, i) => (
                     <li key={i} className="flex items-start gap-3">
-                      <span className="mt-1 w-6 h-6 rounded-full bg-[#EEF4F2] text-[#7A958E] text-xs flex items-center justify-center flex-shrink-0 font-bold border border-[#B0C8C2]">{i+1}</span>
-                      <div className="flex-1 text-[#2C2C2C]">
+                      <span className="mt-1 w-6 h-6 rounded-full bg-[var(--color-surface)] text-[var(--color-success)] text-xs flex items-center justify-center flex-shrink-0 font-bold border border-[var(--color-border)]">{i+1}</span>
+                      <div className="flex-1 text-[var(--color-text-primary)]">
                         <MarkdownText content={c} />
                       </div>
                     </li>
@@ -161,19 +161,19 @@ export default function StudyGuidePage() {
             {/* Important Terms - Table format */}
             {guide.important_terms?.length > 0 && (
               <Card className="overflow-x-auto">
-                <h3 className="text-lg font-bold mb-4 text-[#7A958E]">### Important Terms</h3>
-                <table className="min-w-full divide-y divide-gray-200 border border-[#EBE6DE] rounded-lg overflow-hidden">
-                  <thead className="bg-gray-50">
+                <h3 className="text-lg font-bold mb-4 text-[var(--color-success)]">Important Terms</h3>
+                <table className="min-w-full divide-y divide-[var(--color-border)] border border-[var(--color-border)] rounded-lg overflow-hidden">
+                  <thead className="bg-[var(--color-surface)]">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-r border-[#EBE6DE]">Term</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Definition</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider border-r border-[var(--color-border)]">Term</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Definition</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-[var(--color-surface)] divide-y divide-[var(--color-border)]">
                     {guide.important_terms.map((t, i) => (
-                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 border-r border-[#EBE6DE]">{t.term}</td>
-                        <td className="px-6 py-4 text-sm text-[#4A4A4A]"><MarkdownText content={t.definition} /></td>
+                      <tr key={i} className={i % 2 === 0 ? 'bg-[var(--color-surface)]' : 'bg-[var(--color-surface)]'}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[var(--color-text-primary)] border-r border-[var(--color-border)]">{t.term}</td>
+                        <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]"><MarkdownText content={t.definition} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -184,16 +184,16 @@ export default function StudyGuidePage() {
             {/* Practice Questions */}
             {guide.practice_questions?.length > 0 && (
               <Card>
-                <h3 className="text-lg font-bold mb-4 text-[#7A958E]">### Practice Questions</h3>
+                <h3 className="text-lg font-bold mb-4 text-[var(--color-success)]">Practice Questions</h3>
                 <div className="space-y-5">
                   {guide.practice_questions.map((q, i) => (
-                    <div key={i} className="border-b border-gray-150 pb-4 last:border-0">
-                      <p className="font-semibold text-base text-[#2C2C2C] mb-2">
+                    <div key={i} className="border-b border-[var(--color-border)] pb-4 last:border-0">
+                      <p className="font-semibold text-base text-[var(--color-text-primary)] mb-2">
                         {i+1}. <MarkdownText content={q.question} />
                       </p>
                       <details className="group">
-                        <summary className="text-xs text-[#5F8B8B] cursor-pointer hover:text-[#8DA9A0] select-none font-semibold">Show answer</summary>
-                        <div className="mt-2 p-3 rounded-lg text-sm bg-[#FBF4E6] text-gray-800 border border-[#E4C07A]/40">
+                        <summary className="text-xs text-[var(--color-accent)] cursor-pointer hover:text-[var(--color-accent)] select-none font-semibold">Show answer</summary>
+                        <div className="mt-2 p-3 rounded-lg text-sm bg-[var(--color-surface)] text-[var(--color-text-primary)] border border-[var(--color-border)]">
                           Answer: <MarkdownText content={q.answer} />
                         </div>
                       </details>
@@ -206,12 +206,12 @@ export default function StudyGuidePage() {
             {/* Recommended Resources */}
             {guide.recommended_resources?.length > 0 && (
               <Card>
-                <h3 className="text-lg font-bold mb-4 text-[#7A958E]">### Recommended Resources</h3>
+                <h3 className="text-lg font-bold mb-4 text-[var(--color-success)]">Recommended Resources</h3>
                 <ul className="space-y-2">
                   {guide.recommended_resources.map((r, i) => (
                     <li key={i} className="text-sm flex items-start gap-2">
-                      <span className="text-[#8DA9A0] mt-1">•</span>
-                      <span className="text-[#2C2C2C]"><MarkdownText content={r} /></span>
+                      <span className="text-[var(--color-text-muted)] mt-1">•</span>
+                      <span className="text-[var(--color-text-primary)]"><MarkdownText content={r} /></span>
                     </li>
                   ))}
                 </ul>
@@ -223,9 +223,9 @@ export default function StudyGuidePage() {
 
       {!guide && !loading && (
         <div className="text-center py-16">
-          <AutoStoriesIcon style={{ fontSize: 64, color: '#D4A857', marginBottom: 16 }} />
-          <h3 className="text-lg font-semibold mb-2" style={{ color: '#2C2C2C' }}>Ready to study?</h3>
-          <p className="text-sm text-gray-500 max-w-sm mx-auto">
+          <AutoStoriesIcon style={{ fontSize: 62, color: 'var(--color-accent)', marginBottom: 16 }} />
+          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>Ready to study?</h3>
+          <p className="text-sm text-[var(--color-text-muted)] max-w-sm mx-auto">
             Enter any topic above and get key concepts, important terms, practice questions, and resource recommendations.
           </p>
           <div className="mt-4">

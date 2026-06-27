@@ -7,6 +7,17 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshUser = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setUser(res.data.user);
+      return res.data.user;
+    } catch {
+      setUser(null);
+      return null;
+    }
+  };
+
   useEffect(() => {
     api.get('/auth/me')
       .then(res => setUser(res.data.user))
@@ -44,7 +55,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, googleLogin, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, googleLogin, register, logout, updateProfile, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

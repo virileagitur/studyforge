@@ -23,8 +23,9 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      await register(form);
-      navigate('/');
+      const data = await register(form);
+      // New users always go through onboarding
+      navigate('/onboarding');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
@@ -36,8 +37,14 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      await googleLogin(response.credential);
-      navigate('/');
+      const userData = await googleLogin(response.credential);
+      const user = userData?.user;
+      if (user && user.onboarding_completed) {
+        const nameSlug = encodeURIComponent(user.name?.toLowerCase().replace(/\s+/g, '-') || 'user');
+        navigate(`/${nameSlug}/dashboard`);
+      } else {
+        navigate('/onboarding');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Google sign-up failed.');
     } finally {

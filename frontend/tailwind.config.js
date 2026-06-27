@@ -1,49 +1,60 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  darkMode: 'class', // enable class-based dark mode
   theme: {
     extend: {
       colors: {
-        orange: {
-          primary: '#F97316',
-          light: '#FB923C',
-          hover: '#EA6C0A',
+        // Backgrounds
+        background: {
+          light: '#F8FAFC',
+          dark: '#0B0F19'
         },
-        yellow: {
-          primary: '#FACC15',
-          light: '#FDE047',
-          accent: '#FEF3C7',
-          subtle: '#FFFBEB',
+        surface: {
+          light: '#FFFFFF',
+          dark: '#151B2B'
         },
-        bg: {
-          warm: '#FFFDF7',
-          card: '#FFFBF5',
+        'surface-raised': {
+          light: '#F1F5F9',
+          dark: '#1E293B'
         },
-        text: {
-          primary: '#1A1A1A',
-          secondary: '#4A4A4A',
-          muted: '#6B7280',
+        // Text
+        'text-primary': {
+          light: '#0F172A',
+          dark: '#F8FAFC'
         },
+        'text-secondary': {
+          light: '#475569',
+          dark: '#94A3B8'
+        },
+        'text-muted': {
+          light: '#94A3B8',
+          dark: '#64748B'
+        },
+        // Accent
+        accent: '#6366F1', // Indigo-500
+        'accent-hover': '#4F46E5', // Indigo-600
+        // Semantic
+        error: '#EF4444',
+        success: '#10B981',
+        // Borders
+        border: {
+          light: '#E2E8F0',
+          dark: '#334155'
+        }
       },
-      fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'Verdana', 'Arial', 'sans-serif'],
-      },
-      fontSize: {
-        base: '1rem',
-        h4: '1.25rem',
-        h3: '1.5rem',
-        h2: '1.75rem',
-        h1: '2rem',
-      },
+      // We'll also extend the boxShadow and borderRadius if needed, but keep existing
       boxShadow: {
         card: '0 2px 8px rgba(0,0,0,0.06)',
         'card-hover': '0 4px 16px rgba(0,0,0,0.10)',
+        modal: '0 8px 40px rgba(0,0,0,0.14)'
       },
       borderRadius: {
         DEFAULT: '8px',
         lg: '12px',
-      },
-    },
+        xl: '16px'
+      }
+    }
   },
   plugins: [],
 }

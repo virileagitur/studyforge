@@ -69,21 +69,21 @@ export default function HomeworkScannerPage() {
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       <Card>
-        <h3 className="text-base font-semibold mb-4" style={{ color: '#1A1A1A' }}>Upload Homework Photo</h3>
+        <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Upload Homework Photo</h3>
 
         <div
           onClick={() => fileRef.current?.click()}
           onDrop={e => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }}
           onDragOver={e => e.preventDefault()}
-          className="border-2 border-dashed border-orange-200 rounded-xl p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors"
+          className="border-2 border-dashed border-[var(--color-accent)]/20 rounded-xl p-8 text-center cursor-pointer hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 transition-colors"
         >
           {preview ? (
             <img src={preview} alt="Homework" className="max-h-48 mx-auto rounded-lg object-contain" />
           ) : (
             <div>
-              <CameraAltIcon style={{ fontSize: 48, color: '#FACC15', marginBottom: 8 }} />
-              <p className="text-sm font-medium" style={{ color: '#1A1A1A' }}>Drop an image here or click to upload</p>
-              <p className="text-xs mt-1" style={{ color: '#6B7280' }}>Supports JPG, PNG, HEIC</p>
+              <CameraAltIcon style={{ fontSize: 48, color: 'var(--color-accent)', marginBottom: 8 }} />
+              <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>Drop an image here or click to upload</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>Supports JPG, PNG, HEIC</p>
             </div>
           )}
         </div>
@@ -100,13 +100,13 @@ export default function HomeworkScannerPage() {
       </Card>
 
       <Card>
-        <h3 className="text-base font-semibold mb-3" style={{ color: '#1A1A1A' }}>Problem Text</h3>
-        <p className="text-sm mb-2" style={{ color: '#4A4A4A' }}>
+        <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>Problem Text</h3>
+        <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>
           The extracted text will appear here. You can also type or paste the problem directly.
         </p>
         <textarea
-          className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-vertical"
-          style={{ minHeight: '100px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', color: '#1A1A1A' }}
+          className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] resize-vertical bg-[var(--color-background)] min-h-[100px]"
+          style={{ boxShadow: 'var(--shadow-sm)', color: 'var(--color-text-primary)' }}
           placeholder="Type or paste the homework problem here..."
           value={extractedText}
           onChange={e => setExtractedText(e.target.value)}
@@ -121,14 +121,15 @@ export default function HomeworkScannerPage() {
       {loading && (
         <div className="flex flex-col items-center py-8 gap-3">
           <Spinner size="lg" />
-          <p className="text-sm" style={{ color: '#4A4A4A' }}>Analyzing your homework problem...</p>
+          <p className="text-sm text-[var(--color-text-muted)]">Analyzing your homework problem...</p>
         </div>
       )}
 
       {solution && (
         <Card>
-          <h3 className="text-base font-semibold mb-4" style={{ color: '#F97316' }}>Solution</h3>
-          <div className="text-sm leading-relaxed" style={{ color: '#1A1A1A', whiteSpace: 'pre-wrap' }}>
+          <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--color-accent)' }}>Solution</h3>
+
+          <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--color-text-primary)' }}>
             {solution}
           </div>
         </Card>

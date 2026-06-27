@@ -89,7 +89,7 @@ export default function ResearchPage() {
       await api.post(`/ai/research/${id}/flashcards`);
       setSuccess('Flashcards generated and saved.');
     } catch { setError('Failed to generate flashcards.'); }
-    finally { setAiLoading(s => ({ ...s, [id]: null })); }
+    finally { setAiLogging(s => ({ ...s, [id]: null })); }
   };
 
   const setF = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
@@ -111,13 +111,13 @@ export default function ResearchPage() {
       {/* Search & Filter */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fontSize="small" />
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" fontSize="small" />
           <input
             placeholder="Search research..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white min-h-[44px]"
-            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-[var(--color-surface)] min-h-[44px]"
+            style={{ boxShadow: 'var(--shadow-sm)', color: 'var(--color-text-primary)', backgroundColor: 'var(--color-surface)' }}
           />
         </div>
         <Select value={filterSubject} onChange={e => setFilterSubject(e.target.value)} className="w-36">
@@ -140,22 +140,22 @@ export default function ResearchPage() {
               <div className="flex items-start gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-base" style={{ color: '#1A1A1A' }}>{item.title}</h3>
-                    <Badge label={item.source_type} color={item.source_type} />
+                    <h3 className="font-semibold text-base" style={{ color: 'var(--color-text-primary)' }}>{item.title}</h3>
+                    <Badge label={item.source_type} color="orange" />
                     {item.subject && <Badge label={item.subject} color="orange" />}
                   </div>
                   {item.url && (
                     <a href={item.url} target="_blank" rel="noopener noreferrer"
-                       className="text-sm text-orange-500 hover:underline flex items-center gap-1 mb-2">
-                      <OpenInNewIcon fontSize="small" />
+                       className="text-sm text-[var(--color-accent)] hover:underline flex items-center gap-1 mb-2">
+                      <OpenInNewIcon fontSize="small" style={{ color: 'var(--color-accent)' }} />
                       <span className="truncate max-w-xs">{item.url}</span>
                     </a>
                   )}
-                  {item.notes && <p className="text-sm mb-2" style={{ color: '#4A4A4A' }}>{item.notes}</p>}
+                  {item.notes && <p className="text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>{item.notes}</p>}
                   {item.ai_summary && (
-                    <div className="mt-2 p-3 rounded-lg text-sm" style={{ background: '#FEF3C7' }}>
-                      <p className="font-medium text-xs mb-1" style={{ color: '#D97706' }}>AI Summary</p>
-                      <p style={{ color: '#1A1A1A' }}>{item.ai_summary}</p>
+                    <div className="mt-2 p-3 rounded-lg text-sm" style={{ background: 'var(--color-background)' }}>
+                      <p className="font-medium text-xs mb-1" style={{ color: 'var(--color-accent)' }}>AI Summary</p>
+                      <p style={{ color: 'var(--color-text-primary)' }}>{item.ai_summary}</p>
                     </div>
                   )}
                   {item.tags?.length > 0 && (
@@ -176,10 +176,10 @@ export default function ResearchPage() {
                   </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
-                  <button onClick={() => openEdit(item)} className="p-2 rounded-lg hover:bg-orange-50 text-gray-400 hover:text-orange-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+                  <button onClick={() => openEdit(item)} className="p-2 rounded-lg hover:bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
                     <EditIcon fontSize="small" />
                   </button>
-                  <button onClick={() => handleDelete(item.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+                  <button onClick={() => handleDelete(item.id)} className="p-2 rounded-lg hover:bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
                     <DeleteIcon fontSize="small" />
                   </button>
                 </div>

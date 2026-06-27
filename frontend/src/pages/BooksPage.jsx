@@ -32,7 +32,7 @@ function StarRating({ value, onChange }) {
           key={star}
           type="button"
           onClick={() => onChange(star === value ? 0 : star)}
-          className="text-[#D4A857] hover:scale-110 transition-transform"
+          className="text-[var(--color-accent)] hover:scale-110 transition-transform"
         >
           {value >= star ? <StarIcon fontSize="small" /> : <StarOutlineIcon fontSize="small" />}
         </button>
@@ -197,13 +197,6 @@ export default function BooksPage() {
   const setF = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
   const setFilter = (key) => (e) => setFilters(f => ({ ...f, [key]: e.target.value }));
 
-  const statusColor = { want_to_read: 'gray', reading: 'sage', finished: 'gold' };
-  const statusBgClasses = {
-    want_to_read: 'bg-gray-100 text-gray-600',
-    reading: 'bg-[#EEF4F2] text-[#7A958E]',
-    finished: 'bg-[#FBF4E6] text-[#C49A47]'
-  };
-
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;
 
   return (
@@ -217,8 +210,8 @@ export default function BooksPage() {
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center p-4 bg-white rounded-xl" style={{ boxShadow: 'var(--shadow-sm)' }}>
-        <FilterListIcon style={{ color: '#8DA9A0' }} />
+      <div className="flex flex-wrap gap-3 items-center p-4 bg-[var(--color-surface)] rounded-xl">
+        <FilterListIcon style={{ color: 'var(--color-accent)' }} />
         <Select value={filters.status} onChange={setFilter('status')} className="w-40">
           <option value="">All Reading Status</option>
           {STATUSES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
@@ -245,12 +238,11 @@ export default function BooksPage() {
           {books.map(book => (
             <div
               key={book.id}
-              className="bg-white rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all hover:-translate-y-0.5 relative"
-              style={{ boxShadow: 'var(--shadow-card)' }}
+              className="bg-[var(--color-surface)] rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-transform hover:-translate-y-0.5 relative"
               onClick={() => openDetail(book)}
             >
               {/* Cover Image */}
-              <div className="h-44 bg-gradient-to-br from-[#EEF4F2] to-[#F5F0E8] flex items-center justify-center relative">
+              <div className="h-44 bg-[var(--color-surface-raised)] flex items-center justify-center relative">
                 {book.book_cover_url ? (
                   <img
                     src={book.book_cover_url}
@@ -259,47 +251,47 @@ export default function BooksPage() {
                     onError={e => { e.target.style.display = 'none'; }}
                   />
                 ) : (
-                  <AutoStoriesIcon style={{ fontSize: 56, color: '#B0C8C2' }} />
+                  <AutoStoriesIcon style={{ fontSize: 48, color: 'var(--color-accent)' }} />
                 )}
                 {/* Favorite Heart */}
                 <button
-                  className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white transition-colors z-10"
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-[var(--color-surface)]/80 hover:bg-[var(--color-surface)] transition-colors z-10"
                   onClick={e => { e.stopPropagation(); toggleFavorite(book); }}
                   title={book.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
                   {book.is_favorite
-                    ? <FavoriteIcon style={{ color: '#E05050', fontSize: 18 }} />
-                    : <FavoriteBorderIcon style={{ color: '#9CA3AF', fontSize: 18 }} />
+                    ? <FavoriteIcon style={{ color: 'var(--color-error)', fontSize: 18 }} />
+                    : <FavoriteBorderIcon style={{ color: 'var(--color-text-muted)', fontSize: 18 }} />
                   }
                 </button>
                 {/* Status badge */}
-                <span className={`absolute bottom-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full ${statusBgClasses[book.status]}`}>
+                <span className={`absolute bottom-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--color-background)] text-[var(--color-text-primary)]`}>
                   {book.status.replace(/_/g, ' ')}
                 </span>
               </div>
 
               {/* Info */}
               <div className="p-4 space-y-2">
-                <h3 className="font-semibold text-sm leading-tight line-clamp-2" style={{ color: 'var(--color-text)' }}>
+                <h3 className="font-semibold text-sm leading-tight line-clamp-2" style={{ color: 'var(--color-text-primary)' }}>
                   {book.title}
                 </h3>
                 {book.author && (
-                  <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>by {book.author}</p>
+                  <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>by {book.author}</p>
                 )}
                 {book.rating > 0 && (
-                  <div className="flex items-center gap-1 text-[#D4A857]">
-                    {[...Array(book.rating)].map((_, i) => <StarIcon key={i} style={{ fontSize: 14 }} />)}
+                  <div className="flex items-center gap-1">
+                    {[...Array(book.rating)].map((_, i) => <StarIcon key={i} style={{ fontSize: 14, color: 'var(--color-accent)' }} />)}
                   </div>
                 )}
                 {book.status === 'reading' && book.progress_percent > 0 && (
                   <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-gray-400">
+                    <div className="flex justify-between text-xs text-[var(--color-text-muted)]">
                       <span>Progress</span>
                       <span>{book.progress_percent}%</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-[var(--color-background)] rounded-full h-1.5 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[#8DA9A0] transition-all"
+                        className="h-full rounded-full bg-[var(--color-accent)] transition-all"
                         style={{ width: `${book.progress_percent}%` }}
                       />
                     </div>
@@ -308,13 +300,13 @@ export default function BooksPage() {
                 <div className="flex gap-1 pt-1">
                   <button
                     onClick={e => { e.stopPropagation(); openEdit(book); }}
-                    className="p-1.5 rounded-lg hover:bg-[#EEF4F2] text-gray-400 hover:text-[#8DA9A0] transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
                   >
                     <EditIcon style={{ fontSize: 16 }} />
                   </button>
                   <button
                     onClick={e => { e.stopPropagation(); handleDelete(book.id); }}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
                   >
                     <DeleteIcon style={{ fontSize: 16 }} />
                   </button>
@@ -337,31 +329,31 @@ export default function BooksPage() {
                   className="w-24 h-36 object-cover rounded-xl flex-shrink-0 shadow-md"
                 />
               ) : (
-                <div className="w-24 h-36 rounded-xl bg-[#EEF4F2] flex items-center justify-center flex-shrink-0">
-                  <AutoStoriesIcon style={{ fontSize: 36, color: '#B0C8C2' }} />
+                <div className="w-24 h-36 rounded-xl bg-[var(--color-surface-raised)] flex items-center justify-center flex-shrink-0">
+                  <AutoStoriesIcon style={{ fontSize: 36, color: 'var(--color-accent)' }} />
                 </div>
               )}
               <div className="space-y-2 flex-1">
-                <h2 className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>{selectedBook.title}</h2>
+                <h2 className="text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{selectedBook.title}</h2>
                 {selectedBook.author && <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>by {selectedBook.author}</p>}
-                {selectedBook.publisher && <p className="text-xs text-gray-400">{selectedBook.publisher}</p>}
+                {selectedBook.publisher && <p className="text-xs text-[var(--color-text-muted)]">{selectedBook.publisher}</p>}
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusBgClasses[selectedBook.status]}`}>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--color-background)] text-[var(--color-text-primary)]`}>
                     {selectedBook.status.replace(/_/g, ' ')}
                   </span>
                   {selectedBook.subject && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-[#EEF4F2] text-[#7A958E] font-medium">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-background)]: background-color: var(--color-surface-raised); text-[var(--color-text-muted)] font-medium">
                       {selectedBook.subject}
                     </span>
                   )}
                 </div>
                 {selectedBook.rating > 0 && (
-                  <div className="flex items-center gap-1 text-[#D4A857]">
+                  <div className="flex items-center gap-1 text-[var(--color-accent)]">
                     {[...Array(selectedBook.rating)].map((_, i) => <StarIcon key={i} style={{ fontSize: 16 }} />)}
                   </div>
                 )}
                 {selectedBook.page_count && (
-                  <p className="text-xs text-gray-400">{selectedBook.page_count} pages</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">{selectedBook.page_count} pages</p>
                 )}
               </div>
             </div>
@@ -370,11 +362,11 @@ export default function BooksPage() {
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="font-medium">Reading Progress</span>
-                  <span className="font-bold" style={{ color: '#8DA9A0' }}>{selectedBook.progress_percent}%</span>
+                  <span className="font-bold" style={{ color: 'var(--color-accent)' }}>{selectedBook.progress_percent}%</span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div className="w-full bg-[var(--color-background)] rounded-full h-2.5 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-[#8DA9A0]"
+                    className="h-full rounded-full bg-[var(--color-accent)]"
                     style={{ width: `${selectedBook.progress_percent}%` }}
                   />
                 </div>
@@ -383,7 +375,7 @@ export default function BooksPage() {
 
             {selectedBook.description && (
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Description</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">Description</p>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
                   {selectedBook.description}
                 </p>
@@ -392,17 +384,17 @@ export default function BooksPage() {
 
             {selectedBook.notes && (
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">My Notes</p>
-                <p className="text-sm leading-relaxed italic" style={{ color: 'var(--color-text)' }}>
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">My Notes</p>
+                <p className="text-sm leading-relaxed italic" style={{ color: 'var(--color-text-primary)' }}>
                   {selectedBook.notes}
                 </p>
               </div>
             )}
 
             {/* AI Summary Section */}
-            <div className="border-t border-[#EBE6DE] pt-4">
+            <div className="border-t border-[var(--color-border)] pt-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-bold uppercase tracking-wider text-gray-400">AI Summary</p>
+                <p className="text-sm font-bold uppercase tracking-wider text-[var(--color-text-muted)]">AI Summary</p>
                 <Button
                   variant="outline"
                   size="sm"
@@ -414,11 +406,11 @@ export default function BooksPage() {
                 </Button>
               </div>
               {selectedBook.summary ? (
-                <div className="book-summary-content text-sm leading-relaxed p-4 bg-[#F5F0E8] rounded-xl border border-[#EBE6DE]">
+                <div className="book-summary-content text-sm leading-relaxed p-4 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)]">
                   <ReactMarkdown>{selectedBook.summary}</ReactMarkdown>
                 </div>
               ) : (
-                <p className="text-sm text-gray-400 italic">
+                <p className="text-sm text-[var(--color-text-muted)] italic">
                   Generate an AI-powered summary and analysis of this book using the button above.
                 </p>
               )}
@@ -428,12 +420,13 @@ export default function BooksPage() {
               <Button onClick={() => { setDetailOpen(false); openEdit(selectedBook); }} icon={EditIcon} variant="outline" size="sm">
                 Edit Details
               </Button>
-              <Button onClick={() => handleDelete(selectedBook.id)} variant="danger" size="sm">
+              <Button onClick={() => handleDelete(selectedBook.id)} variant="destructive" size="sm">
                 Remove Book
               </Button>
             </div>
           </div>
         )}
+
       </Modal>
 
       {/* Add / Edit Modal */}
@@ -446,8 +439,8 @@ export default function BooksPage() {
         <form onSubmit={handleSave} className="space-y-5">
           {/* ISBN Lookup */}
           {!editBook && (
-            <div className="p-4 bg-[#EEF4F2] rounded-xl border border-[#B0C8C2]/40">
-              <p className="text-sm font-bold mb-2" style={{ color: '#7A958E' }}>Quick Fill via ISBN</p>
+            <div className="p-4 bg-[var(--color-surface-raised)] rounded-xl border border-[var(--color-border)]/40">
+              <p className="text-sm font-bold mb-2" style={{ color: 'var(--color-accent)' }}>Quick Fill via ISBN</p>
               <div className="flex gap-2">
                 <Input
                   placeholder="Enter ISBN-10 or ISBN-13..."
@@ -457,7 +450,7 @@ export default function BooksPage() {
                 />
                 <Button
                   type="button"
-                  variant="primary"
+                  variant="secondary"
                   icon={SearchIcon}
                   onClick={handleISBNLookup}
                   disabled={isbnLoading || !isbnQuery.trim()}
@@ -467,11 +460,11 @@ export default function BooksPage() {
                 </Button>
               </div>
               {isbnResult && (
-                <p className="text-xs text-green-700 mt-2 font-semibold">
+                <p className="text-xs text-[var(--color-success)] mt-2 font-semibold">
                   ✓ Found: <span className="font-bold">{isbnResult.title}</span> — fields auto-filled below.
                 </p>
               )}
-              <p className="text-xs text-gray-400 mt-1">Uses OpenLibrary API to auto-fill book details.</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">Uses OpenLibrary API to auto-fill book details.</p>
             </div>
           )}
 
@@ -496,21 +489,21 @@ export default function BooksPage() {
 
           {form.status === 'reading' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reading Progress: {form.progress_percent}%</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Reading Progress: {form.progress_percent}%</label>
               <input
                 type="range"
                 min="0"
                 max="100"
                 value={form.progress_percent}
                 onChange={e => setForm(f => ({ ...f, progress_percent: parseInt(e.target.value) }))}
-                className="w-full accent-[#8DA9A0]"
+                className="w-full accent-[var(--color-accent)]"
               />
             </div>
           )}
 
           {form.status === 'finished' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Your Rating</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">Your Rating</label>
               <StarRating value={parseInt(form.rating) || 0} onChange={v => setForm(f => ({ ...f, rating: v }))} />
             </div>
           )}
@@ -524,10 +517,10 @@ export default function BooksPage() {
               id="is_favorite"
               checked={form.is_favorite}
               onChange={e => setForm(f => ({ ...f, is_favorite: e.target.checked }))}
-              className="rounded accent-[#D4A857] w-4 h-4"
+              className="rounded accent-[var(--color-accent)] w-4 h-4"
             />
-            <label htmlFor="is_favorite" className="text-sm font-medium text-gray-700 flex items-center gap-1">
-              <FavoriteIcon style={{ color: '#E05050', fontSize: 16 }} /> Add to Favorites
+            <label htmlFor="is_favorite" className="text-sm font-medium text-[var(--color-text-secondary)] flex items-center gap-1">
+              <FavoriteIcon style={{ color: 'var(--color-error)', fontSize: 16 }} /> Add to Favorites
             </label>
           </div>
 

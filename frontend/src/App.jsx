@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -53,6 +53,20 @@ function WildcardRoute() {
   return <Navigate to="/" replace />;
 }
 
+function OnboardingGuard({ children }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.onboarding_completed) {
+      const slug = encodeURIComponent(user.name?.toLowerCase().replace(/\s+/g, '-'));
+      navigate(`/${slug}/dashboard`, { replace: true });
+    }
+  }, [user, navigate]);
+
+  return children;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -61,6 +75,9 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
           <Route path="/register" element={<GuestOnly><RegisterPage /></GuestOnly>} />
+
+          {/* Onboarding (full-screen, no sidebar) */}
+          <Route path="/onboarding" element={<RequireAuth><OnboardingGuard><OnboardingPage /></OnboardingGuard></RequireAuth>} />
 
           {/* Authenticated Application Shell */}
           <Route path="/" element={<RequireAuth><AppLayout /></RequireAuth>}>
@@ -76,7 +93,6 @@ export default function App() {
             <Route path="homework-scanner" element={<HomeworkScannerPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="admin" element={<AdminPage />} />
-            <Route path="onboarding" element={<OnboardingPage />} />
           </Route>
 
           <Route path="*" element={<WildcardRoute />} />

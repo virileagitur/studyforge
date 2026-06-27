@@ -214,10 +214,10 @@ export default function FlashcardsPage() {
           className="cursor-pointer select-none"
           onClick={() => setFlipped(f => !f)}
         >
-          <div className="bg-white rounded-2xl p-10 text-center min-h-[300px] flex flex-col items-center justify-center gap-4 transition-all" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#F97316' }}>{flipped ? 'Answer' : 'Question'}</p>
-            <p className="text-2xl font-semibold leading-relaxed" style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>{flipped ? studyBack : studyFront}</p>
-            {!flipped && <p className="text-xs text-gray-400 mt-4">Tap to reveal</p>}
+          <div className="bg-[var(--color-surface)] rounded-2xl p-10 text-center min-h-[300px] flex flex-col items-center justify-center gap-4 transition-all">
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-accent)' }}>{flipped ? 'Answer' : 'Question'}</p>
+            <p className="text-2xl font-semibold leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>{flipped ? studyBack : studyFront}</p>
+            {!flipped && <p className="text-xs text-[var(--color-text-muted)] mt-4">Tap to reveal</p>}
           </div>
         </div>
       )}
@@ -228,7 +228,7 @@ export default function FlashcardsPage() {
         <Button onClick={() => { setStudyIndex(i => Math.min(deckCards.length-1, i+1)); setFlipped(false); }} disabled={studyIndex === deckCards.length-1}>Next <ChevronRightIcon /></Button>
       </div>
 
-      {deckCards.length === 0 && <p className="text-center text-gray-500">No cards in this deck.</p>}
+      {deckCards.length === 0 && <p className="text-center text-[var(--color-text-muted)]">No cards in this deck.</p>}
     </div>
   );
 
@@ -266,7 +266,7 @@ export default function FlashcardsPage() {
           {!activeDeck && !viewAll && (
             <button
               onClick={() => setViewAll(true)}
-              className="text-sm font-semibold hover:underline px-2 text-orange-500 min-h-[36px]"
+              className="text-sm font-semibold hover:underline px-2 text-[var(--color-accent)] min-h-[36px]"
             >
               View All Cards ({cards.length})
             </button>
@@ -292,22 +292,22 @@ export default function FlashcardsPage() {
             {decks.map(deck => (
               <Card key={deck.id} hover onClick={() => setActiveDeck(deck)}>
                 <div className="flex justify-between items-start gap-2 mb-3">
-                  <div className="flex items-center gap-2 text-orange-500">
-                    <FolderIcon />
-                    <h3 className="font-bold text-base text-gray-900 truncate">{deck.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <FolderIcon style={{ color: 'var(--color-accent)' }} />
+                    <h3 className="font-bold text-base text-[var(--color-text-primary)] truncate">{deck.name}</h3>
                   </div>
                   <div className="flex gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                     <button onClick={() => { setDeckForm({ name: deck.name, subject: deck.subject||'', description: deck.description||'' }); setEditDeck(deck); setDeckModal(true); }}
-                      className="p-1 rounded hover:bg-orange-50 text-gray-400 hover:text-orange-500"><EditIcon sx={{ fontSize: 16 }} /></button>
-                    <button onClick={(e) => handleDeleteDeck(deck.id, e)} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"><DeleteIcon sx={{ fontSize: 16 }} /></button>
+                      className="p-1 rounded hover:bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"><EditIcon sx={{ fontSize: 16 }} /></button>
+                    <button onClick={(e) => handleDeleteDeck(deck.id, e)} className="p-1 rounded hover:bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"><DeleteIcon sx={{ fontSize: 16 }} /></button>
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-500 min-h-[32px] line-clamp-2 mb-3">{deck.description || 'No description provided.'}</p>
+                <p className="text-xs text-[var(--color-text-muted)] min-h-[32px] line-clamp-2 mb-3">{deck.description || 'No description provided.'}</p>
 
-                <div className="flex justify-between items-center pt-3 border-t border-gray-100 flex-wrap gap-2">
+                <div className="flex justify-between items-center pt-3 border-t border-[var(--color-border)] flex-wrap gap-2">
                   {deck.subject ? <Badge label={deck.subject} color="orange" /> : <div />}
-                  <span className="text-xs font-semibold text-gray-400">{deck.card_count || 0} cards</span>
+                  <span className="text-xs font-semibold text-[var(--color-text-muted)]">{deck.card_count || 0} cards</span>
                 </div>
 
                 <div className="mt-3 flex gap-2" onClick={e => e.stopPropagation()}>
@@ -330,53 +330,53 @@ export default function FlashcardsPage() {
             {deckCards.map(card => (
               <Card key={card.id}>
                 <div className="flex justify-between items-start gap-2 mb-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-orange-500">Front</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-accent)]">Front</p>
                   <div className="flex gap-1">
                     <button onClick={() => { setCardForm({ front: card.front, back: card.back, deck_id: card.deck_id||'', subject: card.subject||'' }); setEditCard(card); setCardModal(true); }}
-                      className="p-1 rounded hover:bg-orange-50 text-gray-400 hover:text-orange-500"><EditIcon sx={{ fontSize: 16 }} /></button>
-                    <button onClick={() => handleDeleteCard(card.id)} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"><DeleteIcon sx={{ fontSize: 16 }} /></button>
+                      className="p-1 rounded hover:bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"><EditIcon sx={{ fontSize: 16 }} /></button>
+                    <button onClick={() => handleDeleteCard(card.id)} className="p-1 rounded hover:bg-[var(--color-background)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"><DeleteIcon sx={{ fontSize: 16 }} /></button>
                   </div>
                 </div>
 
-                <p className="font-normal text-lg mb-4 leading-relaxed" style={{ color: '#1A1A1A', fontFamily: 'Georgia, Cambria, serif' }}>{card.front}</p>
+                <p className="font-normal text-lg mb-4 leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>{card.front}</p>
 
-                <div className="border-t border-gray-100 pt-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Back</p>
-                  <p className="text-base leading-relaxed" style={{ color: '#4A4A4A', fontFamily: 'Georgia, Cambria, serif' }}>{card.back}</p>
+                <div className="border-t border-[var(--color-border)] pt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Back</p>
+                  <p className="text-base leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{card.back}</p>
                 </div>
 
                 {/* AI expanded view */}
                 {expandedCard === card.id && (
                   <div className="mt-3 space-y-2 animate-fade-in">
                     {card.simple_explanation && (
-                      <div className="p-2.5 rounded-lg text-xs" style={{ background: '#FEF3C7' }}>
-                        <p className="font-semibold text-orange-600 mb-1">Simple Explanation</p>
-                        <p className="leading-relaxed" style={{ fontFamily: 'Georgia, Cambria, serif' }}>{card.simple_explanation}</p>
+                      <div className="p-2.5 rounded-lg text-xs" style={{ background: 'var(--color-background)' }}>
+                        <p className="font-semibold text-[var(--color-accent)] mb-1">Simple Explanation</p>
+                        <p className="leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>{card.simple_explanation}</p>
                       </div>
                     )}
                     {card.real_world_example && (
-                      <div className="p-2.5 rounded-lg text-xs" style={{ background: '#ECFDF5' }}>
-                        <p className="font-semibold text-green-600 mb-1">Real-World Example</p>
-                        <p className="leading-relaxed" style={{ fontFamily: 'Georgia, Cambria, serif' }}>{card.real_world_example}</p>
+                      <div className="p-2.5 rounded-lg text-xs" style={{ background: 'var(--color-background)' }}>
+                        <p className="font-semibold text-[var(--color-success)] mb-1">Real-World Example</p>
+                        <p className="leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>{card.real_world_example}</p>
                       </div>
                     )}
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[var(--color-border)]">
                   <button onClick={() => handleAI(card.id, 'explain')} disabled={!!aiLoading[card.id]}
-                    className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg hover:bg-orange-50 text-gray-500 hover:text-orange-500 transition-colors min-h-[32px]">
+                    className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg hover:bg-[var(--color-background)/50] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors min-h-[32px]">
                     <LightbulbIcon sx={{ fontSize: 14 }} />
                     {aiLoading[card.id] === 'explain' ? 'Loading...' : 'Explain Simply'}
                   </button>
                   <button onClick={() => handleAI(card.id, 'example')} disabled={!!aiLoading[card.id]}
-                    className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg hover:bg-orange-50 text-gray-500 hover:text-orange-500 transition-colors min-h-[32px]">
+                    className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg hover:bg-[var(--color-background)/50] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors min-h-[32px]">
                     <EmojiObjectsIcon sx={{ fontSize: 14 }} />
                     {aiLoading[card.id] === 'example' ? 'Loading...' : 'Give Example'}
                   </button>
                   {(card.simple_explanation || card.real_world_example) && (
                     <button onClick={() => setExpandedCard(expandedCard === card.id ? null : card.id)}
-                      className="text-xs px-2 py-1.5 rounded-lg hover:bg-gray-100 text-gray-500 min-h-[32px] font-medium ml-auto">
+                      className="text-xs px-2 py-1.5 rounded-lg hover:bg-[var(--color-background)] text-[var(--color-text-muted)] min-h-[32px] font-medium ml-auto">
                       {expandedCard === card.id ? 'Hide Extra' : 'Show Extra'}
                     </button>
                   )}
@@ -423,27 +423,27 @@ export default function FlashcardsPage() {
       <Modal open={generateModal} onClose={() => setGenerateModal(false)} title="AI Generate Flashcards" width="max-w-xl">
         <div className="space-y-4">
           {/* File Upload */}
-          <div className="border border-dashed border-gray-200 rounded-xl p-4 text-center bg-gray-50">
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors mx-auto min-h-[36px]">
+          <div className="border border-[var(--color-border)] border-dashed rounded-xl p-4 text-center bg-[var(--color-surface)]">
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors mx-auto min-h-[36px]">
               <UploadFileIcon fontSize="small" />
               <span>Upload TXT or PDF file</span>
             </button>
-            <p className="text-[10px] text-gray-400 mt-1">Upload study materials to generate flashcards from file content</p>
+            <p className="text-[10px] text-[var(--color-text-muted)] mt-1">Upload study materials to generate flashcards from file content</p>
             <input type="file" ref={fileInputRef} accept=".txt,.pdf" className="hidden" onChange={handleFileUpload} />
           </div>
 
           <Textarea label="Paste text (optional)" placeholder="Paste article, notes, or any text..." value={genText} onChange={e => setGenText(e.target.value)} rows={4} />
           <Input label="Or enter a topic" placeholder="e.g. The French Revolution" value={genTopic} onChange={e => setGenTopic(e.target.value)} />
-          
+
           <div className="grid grid-cols-2 gap-4">
             <Select label="Add to deck (optional)" value={genDeck} onChange={e => setGenDeck(e.target.value)}>
               <option value="">No deck</option>
               {decks.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </Select>
-            
+
             {/* Dynamic Card count slider */}
             <div>
-              <label className="block text-sm font-semibold mb-1" style={{ color: '#4A4A4A' }}>Cards count: {genCount}</label>
+              <label className="block text-sm font-semibold mb-1" style={{ color: 'var(--color-text-secondary)' }}>Cards count: {genCount}</label>
               <input
                 type="range"
                 min="5"
@@ -451,9 +451,9 @@ export default function FlashcardsPage() {
                 step="1"
                 value={genCount}
                 onChange={e => setGenCount(parseInt(e.target.value))}
-                className="w-full accent-orange-500 cursor-pointer h-2 bg-gray-200 rounded-lg appearance-none"
+                className="w-full accent-[var(--color-accent)] cursor-pointer h-2 bg-[var(--color-border)] rounded-lg appearance-none"
               />
-              <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-semibold">
+              <div className="flex justify-between text-[10px] text-[var(--color-text-muted)] mt-1 font-semibold">
                 <span>5</span>
                 <span>10</span>
                 <span>15</span>

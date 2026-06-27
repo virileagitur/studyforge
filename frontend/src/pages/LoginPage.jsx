@@ -16,8 +16,14 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(form.email, form.password);
-      navigate('/');
+      const data = await login(form.email, form.password);
+      const user = data?.user;
+      const nameSlug = encodeURIComponent(user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user');
+      if (!user?.onboarding_completed) {
+        navigate('/onboarding');
+      } else {
+        navigate(`/${nameSlug}/dashboard`);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed. Please try again.');
     } finally {
@@ -29,8 +35,14 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await googleLogin(response.credential);
-      navigate('/');
+      const data = await googleLogin(response.credential);
+      const user = data?.user;
+      const nameSlug = encodeURIComponent(user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user');
+      if (!user?.onboarding_completed) {
+        navigate('/onboarding');
+      } else {
+        navigate(`/${nameSlug}/dashboard`);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Google login failed.');
     } finally {

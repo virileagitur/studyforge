@@ -104,6 +104,7 @@ export default function ProfilePage() {
     }
     setDeleting(true);
     try {
+      // Note: The endpoint might be different; adjust if needed
       await api.delete('/auth/me', { data: { password: deleteForm.password, confirm: deleteForm.confirm } });
       await logout();
       navigate('/');
@@ -123,32 +124,33 @@ export default function ProfilePage() {
 
       {/* Avatar / Identity */}
       <Card>
-        <div className="flex items-center gap-5 mb-6">
+        <div className="flex items-center gap-6 mb-6">
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="w-20 h-20 rounded-full flex items-center justify-center cursor-pointer hover:opacity-85 transition-opacity overflow-hidden relative group flex-shrink-0"
-            style={{ background: 'var(--color-primary-bg)', border: '3px solid var(--color-primary-light)' }}
+            className="w-20 h-20 rounded-full overflow-hidden relative flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity"
             title="Click to change profile image"
           >
             {form.profile_image ? (
               <img src={form.profile_image} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <AccountCircleIcon style={{ fontSize: 48, color: '#8DA9A0' }} />
+              <div className="flex w-full h-full items-center justify-center bg-[var(--color-surface-raised)]">
+                <AccountCircleIcon style={{ fontSize: 48, color: 'var(--color-accent)' }} />
+              </div>
             )}
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
               <EditIcon style={{ color: 'white', fontSize: 20 }} />
             </div>
           </div>
           <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
 
           <div>
-            <p className="font-bold text-xl" style={{ color: 'var(--color-text)' }}>{user?.name}</p>
+            <p className="font-bold text-xl" style={{ color: 'var(--color-text-primary)' }}>{user?.name}</p>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{user?.email}</p>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
               Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '—'}
             </p>
             {user?.role === 'admin' && (
-              <span className="inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#FBF4E6] text-[#C49A47] border border-[#E4C07A]">
+              <span className="inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--color-success)/10] text-[var(--color-success)] border border-[var(--color-success)/20]">
                 Admin Access
               </span>
             )}
@@ -171,24 +173,25 @@ export default function ProfilePage() {
           />
           <Select label="Grade level" value={form.grade_level} onChange={setF('grade_level')}>
             <option value="">Select level</option>
-            {GRADE_LEVELS.map(g => <option key={g} value={g}>{g}</option>)}
+            {GRADE_LEVELS.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
           </Select>
 
           {/* Subjects */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
               Subjects you study
             </label>
             <div className="flex flex-wrap gap-2">
               {COMMON_SUBJECTS.map(subject => (
                 <button
-                  type="button"
                   key={subject}
+                  type="button"
                   onClick={() => toggleSubject(subject)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors min-h-[36px] ${
-                    form.subjects.includes(subject)
-                      ? 'bg-[#8DA9A0] text-white border border-[#7A958E]'
-                      : 'bg-gray-100 text-gray-600 hover:bg-[#EEF4F2] hover:text-[#7A958E]'
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-[var(--color-border)] ${form.subjects.includes(subject)
+                    ? 'bg-[var(--color-accent)] text-white'
+                    : 'bg-[var(--color-background)] text-[var(--color-text-secondary)] hover:bg-[var(--color-background)/50]'
                   }`}
                 >
                   {subject}
@@ -205,19 +208,19 @@ export default function ProfilePage() {
 
       {/* Account Details */}
       <Card>
-        <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Account Details</h3>
+        <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>Account Details</h3>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span style={{ color: 'var(--color-text-secondary)' }}>Email address</span>
-            <span className="font-medium" style={{ color: 'var(--color-text)' }}>{user?.email}</span>
+            <span className="text-[var(--color-text-secondary)]">Email address</span>
+            <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{user?.email}</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: 'var(--color-text-secondary)' }}>Account type</span>
-            <span className="font-medium capitalize" style={{ color: 'var(--color-text)' }}>{user?.role || 'Student'}</span>
+            <span className="text-[var(--color-text-secondary)]">Account type</span>
+            <span className="font-medium capitalize" style={{ color: 'var(--color-text-primary)' }}>{user?.role || 'Student'}</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: 'var(--color-text-secondary)' }}>Member since</span>
-            <span className="font-medium" style={{ color: 'var(--color-text)' }}>
+            <span className="text-[var(--color-text-secondary)]">Member since</span>
+            <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
               {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
             </span>
           </div>
@@ -227,28 +230,28 @@ export default function ProfilePage() {
       {/* AI Features notice */}
       <Card>
         <div className="flex items-start gap-3">
-          <SchoolIcon style={{ color: '#8DA9A0', flexShrink: 0, marginTop: 2 }} />
+          <SchoolIcon style={{ color: 'var(--color-accent)', flexShrink: 0, marginTop: 2 }} />
           <div>
-            <p className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text)' }}>AI Features Active</p>
+            <p className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text-primary)' }}>AI Features Active</p>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              AI features are powered by Google Gemini 2.5 Flash, integrated directly into the platform.
+              AI features are powered by advanced language models, integrated directly into the platform.
             </p>
           </div>
         </div>
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border border-red-200">
+      <Card className="border border-[var(--color-error)/20]">
         <div className="flex items-center gap-2 mb-3">
-          <WarningAmberIcon style={{ color: '#DC2626', fontSize: 20 }} />
-          <h3 className="text-base font-semibold text-red-600">Danger Zone</h3>
+          <WarningAmberIcon style={{ color: 'var(--color-error)', fontSize: 20 }} />
+          <h3 className="text-base font-semibold text-[var(--color-error)]">Danger Zone</h3>
         </div>
-        <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-          Permanently delete your account and all your data, including notes, tasks, flashcards, books, and research items. 
+        <p className="text-sm text-[var(--color-text-muted)] mb-4 leading-relaxed">
+          Permanently delete your account and all your data, including notes, tasks, flashcards, books, and research items.
           This action <strong>cannot be undone</strong>.
         </p>
         <Button
-          variant="danger"
+          variant="destructive"
           icon={DeleteForeverIcon}
           onClick={() => { setDeleteModalOpen(true); setDeleteForm({ password: '', confirm: '' }); setDeleteError(''); }}
         >
@@ -264,9 +267,9 @@ export default function ProfilePage() {
         width="max-w-md"
       >
         <div className="space-y-4">
-          <div className="p-4 bg-red-50 rounded-xl border border-red-200">
-            <p className="text-sm text-red-800 font-semibold mb-1">This will permanently delete:</p>
-            <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+          <div className="p-4 bg-[var(--color-error)/10] rounded-xl border border-[var(--color-error)]">
+            <p className="text-sm text-[var(--color-error)] font-semibold mb-1">This will permanently delete:</p>
+            <ul className="text-sm text-[var(--color-error)] list-disc list-inside space-y-1">
               <li>All your notes and study guides</li>
               <li>All flashcards and decks</li>
               <li>All tasks and assignments</li>
@@ -295,7 +298,7 @@ export default function ProfilePage() {
           <div className="flex gap-3 pt-2">
             <Button
               type="button"
-              variant="danger"
+              variant="destructive"
               disabled={deleting || !deleteForm.password || deleteForm.confirm.toLowerCase() !== 'delete my account'}
               onClick={handleDeleteAccount}
               className="flex-1"
